@@ -16,6 +16,11 @@ CREATE TABLE IF NOT EXISTS product (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+INSERT INTO app_user (email, password_hash, role, enabled)
+VALUES
+('admin@example.com', '$2b$10$bqvU35kSc9sfljZQ5xke9e8tjID3gph4SIIfyPE/oxWhtTLcTn9zy', 'ADMIN', TRUE)
+ON CONFLICT (email) DO NOTHING;
+
 INSERT INTO product (name, description, price, stock)
 VALUES
 ('Mechanical Keyboard', 'Hot-swappable TypeScript developer keyboard', 129.90, 25),
