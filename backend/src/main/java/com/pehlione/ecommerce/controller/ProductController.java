@@ -1,14 +1,18 @@
 package com.pehlione.ecommerce.controller;
 
+import com.pehlione.ecommerce.domain.Product;
+import com.pehlione.ecommerce.dto.PagedResponse;
 import com.pehlione.ecommerce.dto.product.ProductImageResponse;
 import com.pehlione.ecommerce.dto.product.ProductRequest;
 import com.pehlione.ecommerce.dto.product.ProductResponse;
+import com.pehlione.ecommerce.dto.product.ProductSearchParams;
 import com.pehlione.ecommerce.service.ProductImageService;
 import com.pehlione.ecommerce.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -29,6 +33,31 @@ public class ProductController {
     @GetMapping
     public List<ProductResponse> findAll() {
         return productService.findAll();
+    }
+
+    @GetMapping("/search")
+    public PagedResponse<ProductResponse> search(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size,
+            @RequestParam(required = false, defaultValue = "id") String sort,
+            @RequestParam(required = false, defaultValue = "desc") String direction
+    ) {
+        ProductSearchParams params = new ProductSearchParams();
+        params.setSearch(search);
+        params.setCategoryId(categoryId);
+        params.setMinPrice(minPrice);
+        params.setMaxPrice(maxPrice);
+        params.setStatus(status == null || status.isBlank() ? null : Product.ProductStatus.valueOf(status.toUpperCase()));
+        params.setPage(page);
+        params.setSize(size);
+        params.setSort(sort);
+        params.setDirection(direction);
+        return productService.search(params);
     }
 
     @GetMapping("/{id}")
@@ -54,6 +83,14 @@ public class ProductController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         productService.delete(id);
+    }
+
+    @PatchMapping("/{id}/status")
+    public ProductResponse toggleStatus(
+            @PathVariable Long id,
+            @RequestParam Product.ProductStatus status
+    ) {
+        return productService.updateStatus(id, status);
     }
 
     @PostMapping("/{id}/images")

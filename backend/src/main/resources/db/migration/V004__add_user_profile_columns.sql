@@ -1,0 +1,3 @@
+ALTER TABLE app_user
+    ADD COLUMN IF NOT EXISTS full_name   VARCHAR(200),
+    ADD COLUMN IF NOT EXISTS permissions VARCHAR(2000);

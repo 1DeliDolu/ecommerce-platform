@@ -1,6 +1,8 @@
 package com.pehlione.ecommerce.controller;
 
 import jakarta.validation.Valid;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -21,19 +23,37 @@ public class AuthController {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final Counter loginSuccessCounter;
+    private final Counter loginFailureCounter;
 
-    public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder,
+                          JwtService jwtService, MeterRegistry meterRegistry) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.loginSuccessCounter = Counter.builder("ecommerce.auth.login")
+                .tag("result", "success")
+                .description("Successful logins")
+                .register(meterRegistry);
+        this.loginFailureCounter = Counter.builder("ecommerce.auth.login")
+                .tag("result", "failure")
+                .description("Failed logins")
+                .register(meterRegistry);
     }
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        var user = appUserRepository.findByEmailIgnoreCase(request.email())
+        var userOpt = appUserRepository.findByEmailIgnoreCase(request.email())
                 .filter(candidate -> candidate.isEnabled()
-                        && passwordEncoder.matches(request.password(), candidate.getPasswordHash()))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                        && passwordEncoder.matches(request.password(), candidate.getPasswordHash()));
+
+        if (userOpt.isEmpty()) {
+            loginFailureCounter.increment();
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        }
+
+        var user = userOpt.get();
+        loginSuccessCounter.increment();
 
         List<String> permissions = parsePermissions(user.getPermissions());
         String token = jwtService.createToken(user.getEmail(), user.getFullName(), user.getRole(), permissions);

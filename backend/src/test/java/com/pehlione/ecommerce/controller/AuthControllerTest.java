@@ -8,6 +8,7 @@ import com.pehlione.ecommerce.domain.AppUser;
 import com.pehlione.ecommerce.dto.LoginRequest;
 import com.pehlione.ecommerce.repository.AppUserRepository;
 import com.pehlione.ecommerce.security.JwtService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AuthControllerTest {
     private final JwtService jwtService = new JwtService("01234567890123456789012345678901", 30);
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @Test
     void loginReturnsBearerTokenForValidCredentials() {
@@ -32,7 +34,8 @@ class AuthControllerTest {
         AuthController authController = new AuthController(
                 repositoryWithUsers(Map.of("admin@example.com", user)),
                 plainTextPasswordEncoder(),
-                jwtService
+                jwtService,
+                meterRegistry
         );
 
         var response = authController.login(new LoginRequest("admin@example.com", "admin123"));
@@ -56,7 +59,8 @@ class AuthControllerTest {
         AuthController authController = new AuthController(
                 repositoryWithUsers(Map.of("admin@example.com", user)),
                 plainTextPasswordEncoder(),
-                jwtService
+                jwtService,
+                meterRegistry
         );
 
         assertThatThrownBy(() -> authController.login(new LoginRequest("admin@example.com", "wrong-password")))

@@ -2,13 +2,18 @@ package com.pehlione.ecommerce.service;
 
 import com.pehlione.ecommerce.domain.Category;
 import com.pehlione.ecommerce.domain.Product;
+import com.pehlione.ecommerce.dto.PagedResponse;
 import com.pehlione.ecommerce.dto.product.ProductRequest;
 import com.pehlione.ecommerce.dto.product.ProductResponse;
+import com.pehlione.ecommerce.dto.product.ProductSearchParams;
 import com.pehlione.ecommerce.notification.MailNotificationEvent;
 import com.pehlione.ecommerce.repository.CategoryRepository;
 import com.pehlione.ecommerce.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +53,26 @@ public class ProductService {
     public ProductResponse findById(Long id) {
         Product product = getProductOrThrow(id);
         return new ProductResponse(product);
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<ProductResponse> search(ProductSearchParams params) {
+        Sort sort = "asc".equalsIgnoreCase(params.getDirection())
+                ? Sort.by(params.getSort()).ascending()
+                : Sort.by(params.getSort()).descending();
+        PageRequest pageable = PageRequest.of(params.getPage(), params.getSize(), sort);
+
+        Page<ProductResponse> page = productRepository
+                .searchProducts(
+                        params.getSearch(),
+                        params.getCategoryId(),
+                        params.getMinPrice(),
+                        params.getMaxPrice(),
+                        params.getStatus(),
+                        pageable)
+                .map(ProductResponse::new);
+
+        return new PagedResponse<>(page);
     }
 
     public ProductResponse create(ProductRequest request) {
@@ -172,6 +197,12 @@ public class ProductService {
                 Category: %s
                 Slug: %s
                 """.formatted(productName, categoryName, slug));
+    }
+
+    public ProductResponse updateStatus(Long id, Product.ProductStatus status) {
+        Product product = getProductOrThrow(id);
+        product.setStatus(status);
+        return new ProductResponse(productRepository.save(product));
     }
 
     public Product getProductOrThrow(Long id) {

@@ -7,6 +7,8 @@ import com.pehlione.ecommerce.notification.NotificationTemplateService;
 import com.pehlione.ecommerce.repository.CartItemRepository;
 import com.pehlione.ecommerce.repository.CustomerOrderRepository;
 import com.pehlione.ecommerce.repository.ProductRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.transaction.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -24,17 +26,26 @@ public class CheckoutService {
     private final ProductRepository productRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationTemplateService notificationTemplateService;
+    private final Counter orderCreatedCounter;
+    private final Counter paymentFailureCounter;
 
     public CheckoutService(CartItemRepository cartItemRepository,
                            CustomerOrderRepository orderRepository,
                            ProductRepository productRepository,
                            ApplicationEventPublisher eventPublisher,
-                           NotificationTemplateService notificationTemplateService) {
+                           NotificationTemplateService notificationTemplateService,
+                           MeterRegistry meterRegistry) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.eventPublisher = eventPublisher;
         this.notificationTemplateService = notificationTemplateService;
+        this.orderCreatedCounter = Counter.builder("ecommerce.orders.created")
+                .description("Total orders placed")
+                .register(meterRegistry);
+        this.paymentFailureCounter = Counter.builder("ecommerce.orders.payment_failures")
+                .description("Simulated payment failures")
+                .register(meterRegistry);
     }
 
     @Transactional
@@ -89,6 +100,7 @@ public class CheckoutService {
 
         CustomerOrder savedOrder = orderRepository.save(order);
         cartItemRepository.deleteByUserEmail(userEmail);
+        orderCreatedCounter.increment();
 
         eventPublisher.publishEvent(new MailNotificationEvent(
                 savedOrder.getShippingEmail(),
