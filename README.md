@@ -1,0 +1,41 @@
+# Ecommerce Platform Scaffold
+
+TypeScript React frontend, Java Spring Boot backend, PostgreSQL, Prometheus ve Grafana içeren Docker tabanlı modern proje iskeleti.
+
+## Çalıştırma
+
+```bash
+chmod +x scripts/dev-up.sh scripts/dev-down.sh
+./scripts/dev-up.sh
+```
+
+## Servisler
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
+- Backend Health: http://localhost:8080/actuator/health
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001
+  - Kullanıcı: `admin`
+  - Şifre: `admin`
+- PostgreSQL: localhost:5432
+
+## Örnek API
+
+```bash
+curl http://localhost:8080/api/health
+curl http://localhost:8080/api/products
+curl -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@example.com","password":"admin123"}'
+```
+
+## Güvenlik Notları
+
+Bu iskelet development içindir. Production için:
+
+- `.env` değerlerini secret manager ile yönetin.
+- JWT secret/private key değerlerini repoya commit etmeyin.
+- Grafana varsayılan şifresini değiştirin.
+- PostgreSQL kullanıcılarını least privilege prensibiyle ayırın.
+- TLS, rate limiting, WAF ve centralized logging ekleyin.
