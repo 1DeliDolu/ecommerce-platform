@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './styles.css';
+import ModernNavbar from './components/ModernNavbar';
 
 type Product = {
   id: number;
@@ -40,32 +44,36 @@ function App() {
   }
 
   return (
-    <main className="page">
-      <section className="hero">
-        <p className="eyebrow">Docker + Java + TypeScript + PostgreSQL + Monitoring</p>
-        <h1>Modern Ecommerce Platform</h1>
-        <p>Backend status: <strong>{health}</strong></p>
-        <button onClick={loginAsAdmin}>Demo Admin JWT Al</button>
-      </section>
+    <>
+      <ModernNavbar />
 
-      {token && (
-        <section className="card">
-          <h2>JWT Token</h2>
-          <code>{token}</code>
+      <main className="page">
+        <section className="hero">
+          <p className="eyebrow">Docker + Java 25 + TypeScript + PostgreSQL + Monitoring</p>
+          <h1>Modern Ecommerce Platform</h1>
+          <p>Backend status: <strong>{health}</strong></p>
+          <button className="btn btn-warning fw-bold" onClick={loginAsAdmin}>Demo Admin JWT Al</button>
         </section>
-      )}
 
-      <section className="grid">
-        {products.map((product) => (
-          <article className="card" key={product.id}>
-            <h2>{product.name}</h2>
-            <p>{product.description}</p>
-            <strong>€{Number(product.price).toFixed(2)}</strong>
-            <span>Stock: {product.stock}</span>
-          </article>
-        ))}
-      </section>
-    </main>
+        {token && (
+          <section className="card">
+            <h2>JWT Token</h2>
+            <code>{token}</code>
+          </section>
+        )}
+
+        <section className="grid">
+          {products.map((product) => (
+            <article className="card" key={product.id}>
+              <h2>{product.name}</h2>
+              <p>{product.description}</p>
+              <strong>€{Number(product.price).toFixed(2)}</strong>
+              <span>Stock: {product.stock}</span>
+            </article>
+          ))}
+        </section>
+      </main>
+    </>
   );
 }
 
