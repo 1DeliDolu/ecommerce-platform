@@ -46,6 +46,11 @@ export default function ModernNavbar() {
                 Admin
               </a>
             </li>
+            <li className="nav-item">
+              <a className="nav-link" href="#admin-categories">
+                Categories
+              </a>
+            </li>
           </ul>
 
           <form className="d-flex me-lg-3 my-3 my-lg-0 navbar-search" role="search">

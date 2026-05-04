@@ -6,6 +6,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './styles.css';
 import ModernNavbar from './components/ModernNavbar';
 import AdminProductsPage from './features/admin/products/AdminProductsPage';
+import AdminCategoriesPage from './features/admin/categories/AdminCategoriesPage';
 import HomePage from './features/home/HomePage';
 
 type Product = {
@@ -60,6 +61,10 @@ function App() {
 
       <section id="admin-products">
         <AdminProductsPage />
+      </section>
+
+      <section id="admin-categories">
+        <AdminCategoriesPage />
       </section>
     </>
   );

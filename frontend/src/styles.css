@@ -189,17 +189,27 @@ button {
   max-width: 1320px;
 }
 
-.admin-product-summary {
+.admin-categories-page {
+  max-width: 1320px;
+}
+
+.admin-product-summary,
+.category-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
-.admin-product-toolbar {
+.admin-product-toolbar,
+.category-toolbar {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 180px 160px auto auto;
   gap: 12px;
   align-items: center;
+}
+
+.category-toolbar {
+  grid-template-columns: minmax(260px, 1fr) 180px auto auto;
 }
 
 .permission-toggle {
@@ -210,7 +220,8 @@ button {
   white-space: nowrap;
 }
 
-.admin-product-form {
+.admin-product-form,
+.category-form {
   background: #ffffff;
   border: 1px solid #e7eaf0;
   border-radius: 8px;
@@ -235,12 +246,76 @@ button {
   margin-top: 4px;
 }
 
+.summary-icon {
+  color: #0d6efd;
+  font-size: 28px;
+}
+
 .summary-action {
   grid-column: span 1;
 }
 
 .admin-product-card {
   border-radius: 8px;
+}
+
+.category-card {
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 12px 30px rgba(23, 32, 51, 0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-3px);
+}
+
+.category-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: #0d6efd;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+
+.category-description {
+  min-height: 72px;
+}
+
+.category-folder {
+  background: #f6f8fb;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.category-folder span {
+  display: block;
+  color: #6c7484;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.category-folder code {
+  font-size: 12px;
+}
+
+.category-empty-state {
+  background: #ffffff;
+  border: 1px dashed #cfd5df;
+  border-radius: 8px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.category-empty-state i {
+  color: #a4acba;
+  font-size: 48px;
 }
 
 .admin-product-image,
@@ -294,7 +369,9 @@ code {
 
 @media (max-width: 991px) {
   .admin-product-summary,
-  .admin-product-toolbar {
+  .admin-product-toolbar,
+  .category-summary,
+  .category-toolbar {
     grid-template-columns: 1fr;
   }
 
