@@ -5,10 +5,12 @@ import com.pehlione.ecommerce.dto.category.CategoryRequest;
 import com.pehlione.ecommerce.dto.category.CategoryResponse;
 import com.pehlione.ecommerce.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
@@ -16,6 +18,7 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<CategoryResponse> findAll() {
         return categoryRepository.findAll()
                 .stream()
@@ -23,6 +26,7 @@ public class CategoryService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public CategoryResponse findById(Long id) {
         return new CategoryResponse(getCategoryOrThrow(id));
     }

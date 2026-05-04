@@ -1,17 +1,12 @@
 import { Category, CreateCategoryRequest, UpdateCategoryRequest } from './categoryTypes';
+import { tokenStorage } from "../../../security/token-storage";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem('accessToken');
-
-  if (!token) {
-    return { 'Content-Type': 'application/json' };
-  }
-
   return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    ...tokenStorage.authHeader(),
   };
 }
 

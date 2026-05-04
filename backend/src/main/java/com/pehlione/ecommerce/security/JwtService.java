@@ -9,7 +9,6 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
 
 @Service
 public class JwtService {
@@ -44,7 +43,7 @@ public class JwtService {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(subject)
-                .claims(Map.of("role", role))
+                .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expirationMinutes * 60)))
                 .signWith(key)
