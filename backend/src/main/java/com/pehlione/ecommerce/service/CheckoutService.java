@@ -3,6 +3,7 @@ package com.pehlione.ecommerce.service;
 import com.pehlione.ecommerce.domain.*;
 import com.pehlione.ecommerce.dto.customer.*;
 import com.pehlione.ecommerce.notification.MailNotificationEvent;
+import com.pehlione.ecommerce.notification.NotificationTemplateService;
 import com.pehlione.ecommerce.repository.CartItemRepository;
 import com.pehlione.ecommerce.repository.CustomerOrderRepository;
 import com.pehlione.ecommerce.repository.ProductRepository;
@@ -22,15 +23,18 @@ public class CheckoutService {
     private final CustomerOrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationTemplateService notificationTemplateService;
 
     public CheckoutService(CartItemRepository cartItemRepository,
                            CustomerOrderRepository orderRepository,
                            ProductRepository productRepository,
-                           ApplicationEventPublisher eventPublisher) {
+                           ApplicationEventPublisher eventPublisher,
+                           NotificationTemplateService notificationTemplateService) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.eventPublisher = eventPublisher;
+        this.notificationTemplateService = notificationTemplateService;
     }
 
     @Transactional
@@ -89,25 +93,7 @@ public class CheckoutService {
         eventPublisher.publishEvent(new MailNotificationEvent(
                 savedOrder.getShippingEmail(),
                 "Order Confirmation - " + savedOrder.getOrderNumber(),
-                """
-                        Hello %s,
-
-                        Your order has been completed successfully.
-
-                        Order Number: %s
-                        Status: %s
-                        Total Amount: €%s
-
-                        Thank you for shopping with Enterprise Shop.
-
-                        Regards,
-                        Enterprise Shop Team
-                        """.formatted(
-                        savedOrder.getShippingFullName(),
-                        savedOrder.getOrderNumber(),
-                        savedOrder.getStatus().name(),
-                        savedOrder.getTotalAmount()
-                )
+                notificationTemplateService.orderConfirmationHtml(savedOrder)
         ));
 
         return new OrderResponse(savedOrder);

@@ -14,6 +14,18 @@ public class DataInitializer implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
+    private static final String ADMIN_PERMISSIONS =
+            "ADMIN_PANEL_ACCESS,PRODUCT_READ,PRODUCT_CREATE,PRODUCT_UPDATE,PRODUCT_DELETE," +
+            "PRODUCT_IMAGE_UPLOAD,PRODUCT_IMAGE_DELETE,PRODUCT_IMAGE_SET_PRIMARY," +
+            "CATEGORY_READ,CATEGORY_CREATE,CATEGORY_UPDATE,CATEGORY_DELETE," +
+            "ORDER_READ_OWN,ORDER_READ_ALL,USER_MANAGE,ROLE_MANAGE";
+
+    private static final String EMPLOYEE_PERMISSIONS =
+            "ADMIN_PANEL_ACCESS,PRODUCT_READ,PRODUCT_CREATE,PRODUCT_UPDATE," +
+            "PRODUCT_IMAGE_UPLOAD,PRODUCT_IMAGE_SET_PRIMARY,CATEGORY_READ,ORDER_READ_OWN";
+
+    private static final String CUSTOMER_PERMISSIONS = "PRODUCT_READ,ORDER_READ_OWN";
+
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -24,28 +36,30 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        seedAdminUser();
+        seedUser("admin@example.com", "Admin User", "ADMIN", ADMIN_PERMISSIONS, "password");
+        seedUser("employee@example.com", "Employee User", "EMPLOYEE", EMPLOYEE_PERMISSIONS, "password");
+        seedUser("customer@example.com", "Customer User", "CUSTOMER", CUSTOMER_PERMISSIONS, "password");
     }
 
-    private void seedAdminUser() {
-        String adminEmail = "admin@ecommerce.local";
-        String adminPassword = "admin123";
-
-        appUserRepository.findByEmailIgnoreCase(adminEmail).ifPresentOrElse(
+    private void seedUser(String email, String fullName, String role, String permissions, String password) {
+        appUserRepository.findByEmailIgnoreCase(email).ifPresentOrElse(
             existing -> {
-                // Always sync the password so stale hashes from previous runs don't block login
-                existing.setPasswordHash(passwordEncoder.encode(adminPassword));
+                existing.setPasswordHash(passwordEncoder.encode(password));
+                existing.setFullName(fullName);
+                existing.setPermissions(permissions);
                 appUserRepository.save(existing);
-                log.info("Admin user password refreshed: {}", adminEmail);
+                log.info("User refreshed: {}", email);
             },
             () -> {
-                AppUser admin = new AppUser();
-                admin.setEmail(adminEmail);
-                admin.setPasswordHash(passwordEncoder.encode(adminPassword));
-                admin.setRole("ADMIN");
-                admin.setEnabled(true);
-                appUserRepository.save(admin);
-                log.info("Default admin user created: {}", adminEmail);
+                AppUser user = new AppUser();
+                user.setEmail(email);
+                user.setFullName(fullName);
+                user.setPasswordHash(passwordEncoder.encode(password));
+                user.setRole(role);
+                user.setPermissions(permissions);
+                user.setEnabled(true);
+                appUserRepository.save(user);
+                log.info("User created: {} ({})", email, role);
             }
         );
     }

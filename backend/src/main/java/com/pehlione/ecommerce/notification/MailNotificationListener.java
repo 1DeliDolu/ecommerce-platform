@@ -14,6 +14,6 @@ public class MailNotificationListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onMailNotification(MailNotificationEvent event) {
-        notificationMailService.sendPlainTextMail(event.getTo(), event.getSubject(), event.getBody());
+        notificationMailService.sendHtmlMail(event.getTo(), event.getSubject(), event.getBody());
     }
 }

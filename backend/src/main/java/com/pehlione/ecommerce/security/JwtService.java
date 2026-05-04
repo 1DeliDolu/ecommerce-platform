@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -39,11 +40,13 @@ public class JwtService {
         return secretBytes;
     }
 
-    public String createToken(String subject, String role) {
+    public String createToken(String subject, String fullName, String role, List<String> permissions) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(subject)
+                .claim("fullName", fullName)
                 .claim("role", role)
+                .claim("permissions", permissions)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expirationMinutes * 60)))
                 .signWith(key)

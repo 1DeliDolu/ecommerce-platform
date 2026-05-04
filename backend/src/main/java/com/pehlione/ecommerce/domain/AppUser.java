@@ -11,6 +11,9 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String fullName;
+
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -19,6 +22,9 @@ public class AppUser {
 
     @Column(nullable = false)
     private String role;
+
+    @Column(nullable = false, length = 2000)
+    private String permissions = "";
 
     @Column(nullable = false)
     private boolean enabled = true;
@@ -32,6 +38,14 @@ public class AppUser {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getEmail() {
@@ -56,6 +70,14 @@ public class AppUser {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(String permissions) {
+        this.permissions = permissions;
     }
 
     public boolean isEnabled() {

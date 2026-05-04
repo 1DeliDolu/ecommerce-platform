@@ -8,8 +8,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.pehlione.ecommerce.dto.LoginRequest;
 import com.pehlione.ecommerce.dto.LoginResponse;
+import com.pehlione.ecommerce.dto.auth.AuthUserResponse;
 import com.pehlione.ecommerce.repository.AppUserRepository;
 import com.pehlione.ecommerce.security.JwtService;
+
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,7 +35,26 @@ public class AuthController {
                         && passwordEncoder.matches(request.password(), candidate.getPasswordHash()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
-        String token = jwtService.createToken(user.getEmail(), user.getRole());
-        return new LoginResponse(token, "Bearer", user.getRole());
+        List<String> permissions = parsePermissions(user.getPermissions());
+        String token = jwtService.createToken(user.getEmail(), user.getFullName(), user.getRole(), permissions);
+
+        AuthUserResponse userResponse = new AuthUserResponse(
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole(),
+                permissions
+        );
+
+        return new LoginResponse(token, userResponse);
+    }
+
+    private List<String> parsePermissions(String permissions) {
+        if (permissions == null || permissions.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(permissions.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .toList();
     }
 }

@@ -23,8 +23,10 @@ class AuthControllerTest {
     void loginReturnsBearerTokenForValidCredentials() {
         AppUser user = new AppUser();
         user.setEmail("admin@example.com");
+        user.setFullName("Admin User");
         user.setPasswordHash("admin123");
         user.setRole("ADMIN");
+        user.setPermissions("ADMIN_PANEL_ACCESS,PRODUCT_READ");
         user.setEnabled(true);
 
         AuthController authController = new AuthController(
@@ -36,16 +38,19 @@ class AuthControllerTest {
         var response = authController.login(new LoginRequest("admin@example.com", "admin123"));
 
         assertThat(response.accessToken()).isNotBlank();
-        assertThat(response.tokenType()).isEqualTo("Bearer");
-        assertThat(response.role()).isEqualTo("ADMIN");
+        assertThat(response.user().role()).isEqualTo("ADMIN");
+        assertThat(response.user().email()).isEqualTo("admin@example.com");
+        assertThat(response.user().permissions()).contains("ADMIN_PANEL_ACCESS", "PRODUCT_READ");
     }
 
     @Test
     void loginRejectsInvalidCredentials() {
         AppUser user = new AppUser();
         user.setEmail("admin@example.com");
+        user.setFullName("Admin User");
         user.setPasswordHash("admin123");
         user.setRole("ADMIN");
+        user.setPermissions("");
         user.setEnabled(true);
 
         AuthController authController = new AuthController(
