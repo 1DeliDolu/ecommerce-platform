@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { tokenStorage } from "../security/token-storage";
 
 export default function ModernNavbar() {
@@ -37,9 +37,14 @@ export default function ModernNavbar() {
         <div className="collapse navbar-collapse" id="mainNavbar">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
             <li className="nav-item">
-              <Link className="nav-link" to="/">
-                Dashboard
-              </Link>
+              <NavLink className="nav-link" to="/" end>
+                Home
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink className="nav-link" to="/products">
+                Products
+              </NavLink>
             </li>
             <li className="nav-item dropdown">
               <button
@@ -125,22 +130,22 @@ export default function ModernNavbar() {
                   <h6 className="dropdown-header">Account</h6>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/profile">
+                  <Link className="dropdown-item" to="/profile">
                     <i className="bi bi-person me-2" aria-hidden="true"></i>
                     Profile
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/orders">
+                  <Link className="dropdown-item" to="/orders">
                     <i className="bi bi-receipt me-2" aria-hidden="true"></i>
                     My Orders
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/settings">
+                  <Link className="dropdown-item" to="/settings">
                     <i className="bi bi-gear me-2" aria-hidden="true"></i>
                     Settings
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <hr className="dropdown-divider" />

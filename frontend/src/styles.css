@@ -384,3 +384,9 @@ code {
     grid-template-columns: 1fr;
   }
 }
+
+/* React Router active nav link */
+.navbar .nav-link.active {
+  color: #ffc107 !important;
+  font-weight: 700;
+}
