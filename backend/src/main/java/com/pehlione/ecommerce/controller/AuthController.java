@@ -1,14 +1,15 @@
-package com.example.ecommerce.controller;
+package com.pehlione.ecommerce.controller;
 
-import com.example.ecommerce.dto.LoginRequest;
-import com.example.ecommerce.dto.LoginResponse;
-import com.example.ecommerce.repository.AppUserRepository;
-import com.example.ecommerce.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.pehlione.ecommerce.dto.LoginRequest;
+import com.pehlione.ecommerce.dto.LoginResponse;
+import com.pehlione.ecommerce.repository.AppUserRepository;
+import com.pehlione.ecommerce.security.JwtService;
 
 @RestController
 @RequestMapping("/api/auth")

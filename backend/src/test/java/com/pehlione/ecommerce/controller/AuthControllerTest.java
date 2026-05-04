@@ -1,12 +1,13 @@
-package com.example.ecommerce.controller;
+package com.pehlione.ecommerce.controller;
 
-import com.example.ecommerce.domain.AppUser;
-import com.example.ecommerce.dto.LoginRequest;
-import com.example.ecommerce.repository.AppUserRepository;
-import com.example.ecommerce.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.pehlione.ecommerce.domain.AppUser;
+import com.pehlione.ecommerce.dto.LoginRequest;
+import com.pehlione.ecommerce.repository.AppUserRepository;
+import com.pehlione.ecommerce.security.JwtService;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;

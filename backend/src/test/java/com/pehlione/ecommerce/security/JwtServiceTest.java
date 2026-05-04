@@ -1,4 +1,4 @@
-package com.example.ecommerce.security;
+package com.pehlione.ecommerce.security;
 
 import org.junit.jupiter.api.Test;
 

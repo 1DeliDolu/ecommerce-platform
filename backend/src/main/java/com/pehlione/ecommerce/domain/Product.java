@@ -1,4 +1,4 @@
-package com.example.ecommerce.domain;
+package com.pehlione.ecommerce.domain;
 
 import jakarta.persistence.*;
 

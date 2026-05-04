@@ -1,4 +1,4 @@
-package com.example.ecommerce.dto;
+package com.pehlione.ecommerce.dto;
 
 public record LoginResponse(
         String accessToken,

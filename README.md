@@ -1,6 +1,6 @@
 # Ecommerce Platform Scaffold
 
-TypeScript React frontend, Java Spring Boot backend, PostgreSQL, Prometheus ve Grafana içeren Docker tabanlı modern proje iskeleti.
+TypeScript React frontend, Java 25 Spring Boot backend, PostgreSQL, Prometheus ve Grafana içeren Docker tabanlı modern proje iskeleti.
 
 ## Çalıştırma
 

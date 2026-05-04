@@ -1,7 +1,8 @@
-package com.example.ecommerce.repository;
+package com.pehlione.ecommerce.repository;
 
-import com.example.ecommerce.domain.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.pehlione.ecommerce.domain.AppUser;
 
 import java.util.Optional;
 
