@@ -35,22 +35,148 @@ button {
   cursor: pointer;
 }
 
-.app-status-bar,
 .token-panel {
   max-width: 1320px;
   margin: 0 auto;
 }
 
-.app-status-bar {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, max-content));
-  align-items: center;
-  gap: 16px;
+.token-panel {
   padding: 16px 24px 0;
 }
 
-.token-panel {
-  padding: 16px 24px 0;
+.home-page {
+  background: #f5f7fb;
+}
+
+.home-hero {
+  padding: 88px 0;
+  background:
+    radial-gradient(circle at top left, rgba(13, 110, 253, 0.13), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%);
+}
+
+.fw-black {
+  font-weight: 900;
+}
+
+.platform-status-panel,
+.info-card,
+.module-card,
+.contact-card {
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(23, 32, 51, 0.08);
+}
+
+.platform-status-panel,
+.info-card,
+.module-card,
+.contact-card {
+  padding: 24px;
+}
+
+.status-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  background: #f8fafc;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.metric-card i,
+.module-icon i {
+  color: #0d6efd;
+  font-size: 28px;
+}
+
+.metric-card strong,
+.metric-card span {
+  display: block;
+}
+
+.metric-card span {
+  color: #6c7484;
+  font-size: 13px;
+}
+
+.home-modules {
+  background: #ffffff;
+}
+
+.module-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-3px);
+}
+
+.module-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  background: #eef5ff;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+}
+
+.architecture-section {
+  background: #111827;
+  color: #ffffff;
+}
+
+.architecture-section p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.architecture-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.architecture-step {
+  min-height: 92px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.architecture-step span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+}
+
+.contact-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.contact-line > span {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: #0d6efd;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
 }
 
 .card {
@@ -167,9 +293,17 @@ code {
 }
 
 @media (max-width: 991px) {
-  .app-status-bar,
   .admin-product-summary,
   .admin-product-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero {
+    padding: 56px 0;
+  }
+
+  .architecture-grid,
+  .status-metrics {
     grid-template-columns: 1fr;
   }
 }

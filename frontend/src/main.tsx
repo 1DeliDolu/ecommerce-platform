@@ -6,6 +6,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './styles.css';
 import ModernNavbar from './components/ModernNavbar';
 import AdminProductsPage from './features/admin/products/AdminProductsPage';
+import HomePage from './features/home/HomePage';
 
 type Product = {
   id: number;
@@ -48,12 +49,6 @@ function App() {
     <>
       <ModernNavbar />
 
-      <section className="app-status-bar">
-        <span>Backend: <strong>{health}</strong></span>
-        <span>Catalog API: <strong>{products.length}</strong> products</span>
-        <button className="btn btn-sm btn-warning fw-bold" onClick={loginAsAdmin}>Demo Admin JWT Al</button>
-      </section>
-
       {token && (
         <section className="token-panel">
           <h2>JWT Token</h2>
@@ -61,7 +56,11 @@ function App() {
         </section>
       )}
 
-      <AdminProductsPage />
+      <HomePage health={health} productCount={products.length} onLoginAsAdmin={loginAsAdmin} />
+
+      <section id="admin-products">
+        <AdminProductsPage />
+      </section>
     </>
   );
 }
