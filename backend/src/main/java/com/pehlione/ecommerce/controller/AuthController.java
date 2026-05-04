@@ -60,7 +60,7 @@ public class AuthController {
 
         AuthUserResponse userResponse = new AuthUserResponse(
                 user.getEmail(),
-                user.getFullName(),
+                user.getFullName() != null ? user.getFullName() : "",
                 user.getRole(),
                 permissions
         );

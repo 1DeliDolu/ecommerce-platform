@@ -11,8 +11,8 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String fullName;
+    @Column
+    private String fullName = "";
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -23,7 +23,7 @@ public class AppUser {
     @Column(nullable = false)
     private String role;
 
-    @Column(nullable = false, length = 2000)
+    @Column(length = 2000)
     private String permissions = "";
 
     @Column(nullable = false)
