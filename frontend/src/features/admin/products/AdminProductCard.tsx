@@ -4,6 +4,7 @@ export type ProductImage = {
   id: number;
   url: string;
   fileName: string;
+  relativePath: string;
   primary: boolean;
   imageOrder: number;
 };
@@ -200,6 +201,13 @@ export default function AdminProductCard({
             </div>
           ) : (
             <div className="alert alert-light border small mb-0">Bu ürün için fotoğraf yok.</div>
+          )}
+
+          {selectedImage && (
+            <div className="admin-image-path mt-3">
+              <span>Storage path</span>
+              <code>{selectedImage.relativePath}</code>
+            </div>
           )}
 
           {totalPages > 1 && (

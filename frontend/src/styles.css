@@ -69,6 +69,28 @@ button {
   gap: 12px;
 }
 
+.admin-product-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 180px 160px auto auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.permission-toggle {
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  padding: 10px 14px 10px 42px;
+  white-space: nowrap;
+}
+
+.admin-product-form {
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
 .summary-item {
   background: #ffffff;
   border: 1px solid #e7eaf0;
@@ -115,6 +137,24 @@ button {
   height: 58px;
 }
 
+.admin-image-path {
+  background: #f6f8fb;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.admin-image-path span {
+  display: block;
+  color: #6c7484;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.admin-image-path code {
+  font-size: 11px;
+}
+
 .pagination .page-link {
   border-radius: 8px;
   margin-right: 4px;
@@ -128,7 +168,8 @@ code {
 
 @media (max-width: 991px) {
   .app-status-bar,
-  .admin-product-summary {
+  .admin-product-summary,
+  .admin-product-toolbar {
     grid-template-columns: 1fr;
   }
 }
