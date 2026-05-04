@@ -6,6 +6,7 @@
 
 body {
   margin: 0;
+  background: #f5f7fb;
 }
 
 .navbar-brand {
@@ -25,29 +26,8 @@ body {
   border-radius: 8px;
 }
 
-.page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 48px 24px;
-}
-
-.hero {
-  background: white;
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 16px 45px rgba(23, 32, 51, 0.08);
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 12px;
-  font-weight: 700;
-}
-
 h1 {
-  font-size: 44px;
-  margin: 0 0 16px;
+  letter-spacing: 0;
 }
 
 button {
@@ -55,22 +35,100 @@ button {
   cursor: pointer;
 }
 
-.grid {
+.app-status-bar,
+.token-panel {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.app-status-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 18px;
-  margin-top: 24px;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px 0;
+}
+
+.token-panel {
+  padding: 16px 24px 0;
 }
 
 .card {
   background: white;
-  border-radius: 18px;
-  padding: 24px;
+  border-radius: 8px;
   box-shadow: 0 12px 30px rgba(23, 32, 51, 0.07);
+}
+
+.admin-products-page {
+  max-width: 1320px;
+}
+
+.admin-product-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-item {
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.summary-item span {
+  display: block;
+  color: #6c7484;
+  font-size: 13px;
+}
+
+.summary-item strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.summary-action {
+  grid-column: span 1;
+}
+
+.admin-product-card {
+  border-radius: 8px;
+}
+
+.admin-product-image,
+.admin-product-empty-image {
+  height: 260px;
+}
+
+.admin-product-image,
+.admin-product-thumb-image {
+  object-fit: cover;
+}
+
+.admin-product-thumb {
+  width: 72px;
+  border-radius: 8px;
+}
+
+.admin-product-thumb-image {
+  width: 100%;
+  height: 58px;
+}
+
+.pagination .page-link {
+  border-radius: 8px;
+  margin-right: 4px;
 }
 
 code {
   display: block;
   overflow-wrap: anywhere;
   font-size: 12px;
+}
+
+@media (max-width: 991px) {
+  .app-status-bar,
+  .admin-product-summary {
+    grid-template-columns: 1fr;
+  }
 }

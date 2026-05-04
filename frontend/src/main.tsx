@@ -5,6 +5,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './styles.css';
 import ModernNavbar from './components/ModernNavbar';
+import AdminProductsPage from './features/admin/products/AdminProductsPage';
 
 type Product = {
   id: number;
@@ -47,32 +48,20 @@ function App() {
     <>
       <ModernNavbar />
 
-      <main className="page">
-        <section className="hero">
-          <p className="eyebrow">Docker + Java 25 + TypeScript + PostgreSQL + Monitoring</p>
-          <h1>Modern Ecommerce Platform</h1>
-          <p>Backend status: <strong>{health}</strong></p>
-          <button className="btn btn-warning fw-bold" onClick={loginAsAdmin}>Demo Admin JWT Al</button>
-        </section>
+      <section className="app-status-bar">
+        <span>Backend: <strong>{health}</strong></span>
+        <span>Catalog API: <strong>{products.length}</strong> products</span>
+        <button className="btn btn-sm btn-warning fw-bold" onClick={loginAsAdmin}>Demo Admin JWT Al</button>
+      </section>
 
-        {token && (
-          <section className="card">
-            <h2>JWT Token</h2>
-            <code>{token}</code>
-          </section>
-        )}
-
-        <section className="grid">
-          {products.map((product) => (
-            <article className="card" key={product.id}>
-              <h2>{product.name}</h2>
-              <p>{product.description}</p>
-              <strong>€{Number(product.price).toFixed(2)}</strong>
-              <span>Stock: {product.stock}</span>
-            </article>
-          ))}
+      {token && (
+        <section className="token-panel">
+          <h2>JWT Token</h2>
+          <code>{token}</code>
         </section>
-      </main>
+      )}
+
+      <AdminProductsPage />
     </>
   );
 }
