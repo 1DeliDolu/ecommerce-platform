@@ -1,16 +1,6 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
-
-type CategoryStatus = 'ACTIVE' | 'INACTIVE';
-
-type Category = {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  productCount: number;
-  status: CategoryStatus;
-  createdAt: string;
-};
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { createCategory, deleteCategory, getCategories, updateCategory } from './categoryApi';
+import { Category, CategoryStatus, CreateCategoryRequest, UpdateCategoryRequest } from './categoryTypes';
 
 type CategoryFormState = {
   name: string;
@@ -76,6 +66,8 @@ const emptyForm: CategoryFormState = {
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | CategoryStatus>('ALL');
   const [role, setRole] = useState<'ADMIN' | 'EMPLOYEE'>('ADMIN');
@@ -83,6 +75,10 @@ export default function AdminCategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryFormState>(emptyForm);
   const [lastAction, setLastAction] = useState('Category manager ready.');
+
+  useEffect(() => {
+    void loadCategories();
+  }, []);
 
   const permissions = role === 'ADMIN'
     ? { canCreateCategory: true, canUpdateCategory: true, canDeleteCategory: true }
@@ -109,6 +105,21 @@ export default function AdminCategoriesPage() {
   const activeCount = categories.filter((category) => category.status === 'ACTIVE').length;
   const inactiveCount = categories.filter((category) => category.status === 'INACTIVE').length;
   const totalProductCount = categories.reduce((total, category) => total + category.productCount, 0);
+
+  async function loadCategories() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getCategories();
+      setCategories(data);
+      setLastAction('Categories loaded from backend API.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Categories could not be loaded.');
+      setLastAction('Using local demo categories because backend API is unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleCreateOpen = () => {
     setEditingCategory(null);
@@ -139,7 +150,7 @@ export default function AdminCategoriesPage() {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const name = form.name.trim();
     const slug = form.slug.trim();
     const description = form.description.trim();
@@ -155,36 +166,54 @@ export default function AdminCategoriesPage() {
       return;
     }
 
-    if (editingCategory) {
-      setCategories((current) =>
-        current.map((category) =>
-          category.id === editingCategory.id
-            ? { ...category, name, slug, description, status: form.status }
-            : category
-        )
-      );
-      setLastAction(`${name} category updated.`);
-    } else {
-      setCategories((current) => [
-        {
-          id: Date.now(),
+    try {
+      if (editingCategory) {
+        const request: UpdateCategoryRequest = { name, slug, description, status: form.status };
+        const updatedCategory = await updateCategory(editingCategory.id, request);
+        setCategories((current) =>
+          current.map((category) => category.id === editingCategory.id ? updatedCategory : category)
+        );
+        setLastAction(`${name} category updated.`);
+      } else {
+        const request: CreateCategoryRequest = { name, slug, description, status: form.status };
+        const createdCategory = await createCategory(request);
+        setCategories((current) => [createdCategory, ...current]);
+        setLastAction(`${name} category created.`);
+      }
+    } catch (err) {
+      if (editingCategory) {
+        setCategories((current) =>
+          current.map((category) =>
+            category.id === editingCategory.id
+              ? { ...category, name, slug, description, status: form.status }
+              : category
+          )
+        );
+        setLastAction(`${name} updated locally. Backend save failed.`);
+      } else {
+        setCategories((current) => [
+          {
+            id: Date.now(),
           name,
           slug,
           description,
           status: form.status,
           productCount: 0,
           createdAt: new Date().toISOString().slice(0, 10),
-        },
-        ...current,
-      ]);
-      setLastAction(`${name} category created.`);
+          },
+          ...current,
+        ]);
+        setLastAction(`${name} created locally. Backend save failed.`);
+      }
+
+      setError(err instanceof Error ? err.message : 'Category save failed.');
     }
 
     setEditingCategory(null);
     setForm(emptyForm);
   };
 
-  const handleDelete = (category: Category) => {
+  const handleDelete = async (category: Category) => {
     if (category.productCount > 0) {
       window.alert('Bu kategoriye bağlı ürünler var. Önce ürünleri başka kategoriye taşımalısın.');
       return;
@@ -193,8 +222,13 @@ export default function AdminCategoriesPage() {
     const confirmed = window.confirm(`${category.name} kategorisini silmek istiyor musun?`);
     if (!confirmed) return;
 
-    setCategories((current) => current.filter((item) => item.id !== category.id));
-    setLastAction(`${category.name} category deleted.`);
+    try {
+      await deleteCategory(category.id);
+      setCategories((current) => current.filter((item) => item.id !== category.id));
+      setLastAction(`${category.name} category deleted.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Category delete failed.');
+    }
   };
 
   const handleClearForm = () => {
@@ -227,6 +261,24 @@ export default function AdminCategoriesPage() {
         <SummaryCard icon="bi-eye-slash" title="Inactive" value={String(inactiveCount)} />
         <SummaryCard icon="bi-box-seam" title="Total Products" value={String(totalProductCount)} />
       </section>
+
+      {loading && (
+        <div className="alert alert-light border mb-4">
+          <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          Categories loading...
+        </div>
+      )}
+
+      {error && (
+        <div className="alert alert-warning border mb-4">
+          <div className="d-flex flex-column flex-md-row justify-content-between gap-2">
+            <span>{error}</span>
+            <button className="btn btn-sm btn-outline-dark" type="button" onClick={() => void loadCategories()}>
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="category-toolbar mb-4" aria-label="Category filters and permissions">
         <div className="input-group">
