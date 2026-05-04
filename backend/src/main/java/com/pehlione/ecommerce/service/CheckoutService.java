@@ -2,10 +2,12 @@ package com.pehlione.ecommerce.service;
 
 import com.pehlione.ecommerce.domain.*;
 import com.pehlione.ecommerce.dto.customer.*;
+import com.pehlione.ecommerce.notification.MailNotificationEvent;
 import com.pehlione.ecommerce.repository.CartItemRepository;
 import com.pehlione.ecommerce.repository.CustomerOrderRepository;
 import com.pehlione.ecommerce.repository.ProductRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,13 +21,16 @@ public class CheckoutService {
     private final CartItemRepository cartItemRepository;
     private final CustomerOrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CheckoutService(CartItemRepository cartItemRepository,
                            CustomerOrderRepository orderRepository,
-                           ProductRepository productRepository) {
+                           ProductRepository productRepository,
+                           ApplicationEventPublisher eventPublisher) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -80,6 +85,30 @@ public class CheckoutService {
 
         CustomerOrder savedOrder = orderRepository.save(order);
         cartItemRepository.deleteByUserEmail(userEmail);
+
+        eventPublisher.publishEvent(new MailNotificationEvent(
+                savedOrder.getShippingEmail(),
+                "Order Confirmation - " + savedOrder.getOrderNumber(),
+                """
+                        Hello %s,
+
+                        Your order has been completed successfully.
+
+                        Order Number: %s
+                        Status: %s
+                        Total Amount: €%s
+
+                        Thank you for shopping with Enterprise Shop.
+
+                        Regards,
+                        Enterprise Shop Team
+                        """.formatted(
+                        savedOrder.getShippingFullName(),
+                        savedOrder.getOrderNumber(),
+                        savedOrder.getStatus().name(),
+                        savedOrder.getTotalAmount()
+                )
+        ));
 
         return new OrderResponse(savedOrder);
     }

@@ -3,7 +3,10 @@ package com.pehlione.ecommerce.service;
 import com.pehlione.ecommerce.domain.Category;
 import com.pehlione.ecommerce.dto.category.CategoryRequest;
 import com.pehlione.ecommerce.dto.category.CategoryResponse;
+import com.pehlione.ecommerce.notification.MailNotificationEvent;
 import com.pehlione.ecommerce.repository.CategoryRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +16,17 @@ import java.util.List;
 @Transactional
 public class CategoryService {
     private final CategoryRepository categoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final String adminMailTo;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(
+            CategoryRepository categoryRepository,
+            ApplicationEventPublisher eventPublisher,
+            @Value("${app.mail.admin-to:admin@example.com}") String adminMailTo
+    ) {
         this.categoryRepository = categoryRepository;
+        this.eventPublisher = eventPublisher;
+        this.adminMailTo = adminMailTo;
     }
 
     @Transactional(readOnly = true)
@@ -41,7 +52,16 @@ public class CategoryService {
                 normalizeStatus(request.getStatus())
         );
 
-        return new CategoryResponse(categoryRepository.save(category));
+        Category saved = categoryRepository.save(category);
+        publishCategoryMail("Category Created - " + saved.getName(), """
+                A new category has been created.
+
+                Category: %s
+                Slug: %s
+                Status: %s
+                """.formatted(saved.getName(), saved.getSlug(), saved.getStatus().name()));
+
+        return new CategoryResponse(saved);
     }
 
     public CategoryResponse update(Long id, CategoryRequest request) {
@@ -53,7 +73,22 @@ public class CategoryService {
         category.setDescription(normalizeDescription(request.getDescription()));
         category.setStatus(normalizeStatus(request.getStatus()));
 
-        return new CategoryResponse(categoryRepository.save(category));
+        Category saved = categoryRepository.save(category);
+        publishCategoryMail("Category Updated - " + saved.getName(), """
+                A category has been updated.
+
+                Category: %s
+                Slug: %s
+                Status: %s
+                Product Count: %s
+                """.formatted(
+                saved.getName(),
+                saved.getSlug(),
+                saved.getStatus().name(),
+                saved.getProductCount()
+        ));
+
+        return new CategoryResponse(saved);
     }
 
     public void delete(Long id) {
@@ -63,7 +98,16 @@ public class CategoryService {
             throw new IllegalStateException("Category has products and cannot be deleted.");
         }
 
+        String categoryName = category.getName();
+        String categorySlug = category.getSlug();
+
         categoryRepository.delete(category);
+        publishCategoryMail("Category Deleted - " + categoryName, """
+                A category has been deleted.
+
+                Category: %s
+                Slug: %s
+                """.formatted(categoryName, categorySlug));
     }
 
     private Category getCategoryOrThrow(Long id) {
@@ -119,5 +163,9 @@ public class CategoryService {
 
     private String normalizeSlug(String slug) {
         return slug.trim().toLowerCase();
+    }
+
+    private void publishCategoryMail(String subject, String body) {
+        eventPublisher.publishEvent(new MailNotificationEvent(adminMailTo, subject, body));
     }
 }

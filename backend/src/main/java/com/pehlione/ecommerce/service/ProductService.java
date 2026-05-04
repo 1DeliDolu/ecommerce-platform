@@ -4,8 +4,11 @@ import com.pehlione.ecommerce.domain.Category;
 import com.pehlione.ecommerce.domain.Product;
 import com.pehlione.ecommerce.dto.product.ProductRequest;
 import com.pehlione.ecommerce.dto.product.ProductResponse;
+import com.pehlione.ecommerce.notification.MailNotificationEvent;
 import com.pehlione.ecommerce.repository.CategoryRepository;
 import com.pehlione.ecommerce.repository.ProductRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +21,19 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final String adminMailTo;
 
     public ProductService(
             ProductRepository productRepository,
-            CategoryRepository categoryRepository
+            CategoryRepository categoryRepository,
+            ApplicationEventPublisher eventPublisher,
+            @Value("${app.mail.admin-to:admin@example.com}") String adminMailTo
     ) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.eventPublisher = eventPublisher;
+        this.adminMailTo = adminMailTo;
     }
 
     @Transactional(readOnly = true)
@@ -64,6 +73,22 @@ public class ProductService {
         Product saved = productRepository.save(product);
         category.setProductCount(category.getProductCount() + 1);
         categoryRepository.save(category);
+
+        publishProductMail("Product Created - " + saved.getName(), """
+                A new product has been created.
+
+                Product: %s
+                Category: %s
+                Price: €%s
+                Stock: %s
+                Slug: %s
+                """.formatted(
+                saved.getName(),
+                saved.getCategory().getName(),
+                saved.getPrice(),
+                saved.getStockQuantity(),
+                saved.getSlug()
+        ));
 
         return new ProductResponse(saved);
     }
@@ -107,17 +132,46 @@ public class ProductService {
             categoryRepository.save(newCategory);
         }
 
+        publishProductMail("Product Updated - " + saved.getName(), """
+                A product has been updated.
+
+                Product: %s
+                Category: %s
+                Price: €%s
+                Stock: %s
+                Status: %s
+                Slug: %s
+                """.formatted(
+                saved.getName(),
+                saved.getCategory().getName(),
+                saved.getPrice(),
+                saved.getStockQuantity(),
+                saved.getStatus().name(),
+                saved.getSlug()
+        ));
+
         return new ProductResponse(saved);
     }
 
     public void delete(Long id) {
         Product product = getProductOrThrow(id);
         Category category = product.getCategory();
+        String productName = product.getName();
+        String categoryName = category.getName();
+        String slug = product.getSlug();
 
         productRepository.delete(product);
 
         category.setProductCount(Math.max(0, category.getProductCount() - 1));
         categoryRepository.save(category);
+
+        publishProductMail("Product Deleted - " + productName, """
+                A product has been deleted.
+
+                Product: %s
+                Category: %s
+                Slug: %s
+                """.formatted(productName, categoryName, slug));
     }
 
     public Product getProductOrThrow(Long id) {
@@ -154,5 +208,9 @@ public class ProductService {
 
     private String normalizeSlug(String slug) {
         return slug.trim().toLowerCase();
+    }
+
+    private void publishProductMail(String subject, String body) {
+        eventPublisher.publishEvent(new MailNotificationEvent(adminMailTo, subject, body));
     }
 }
