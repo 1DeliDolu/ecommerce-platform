@@ -1,0 +1,24 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Ecommerce DB (ecommerce_user)",
+      "Group": "Docker Local",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "ecommerce",
+      "Username": "ecommerce_user",
+      "SSLMode": "prefer",
+      "Comment": "Application database user"
+    },
+    "2": {
+      "Name": "Ecommerce DB (db_admin)",
+      "Group": "Docker Local",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "ecommerce",
+      "Username": "db_admin",
+      "SSLMode": "prefer",
+      "Comment": "DBA / superuser account"
+    }
+  }
+}

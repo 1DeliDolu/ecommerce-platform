@@ -11,3 +11,9 @@ data/
 .fake
 
 ecommerce-review-agent/
+
+# PostgreSQL SSL secrets — commit etme
+secrets/
+*.key
+*.srl
+postgres/certs/
