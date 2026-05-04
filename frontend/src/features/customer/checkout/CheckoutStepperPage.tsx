@@ -25,7 +25,7 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 import { CartItem, PaymentInfo, ShippingAddress } from '../shop/customerTypes';
-import { placeOrderApi } from '../shop/customerApi';
+import { checkoutOrder } from '../api/customerApi';
 
 const STEPS = ['Sepet', 'Teslimat Adresi', 'Ödeme', 'Onay'];
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300';
@@ -59,6 +59,7 @@ export default function CheckoutStepperPage({
   const [orderTotal, setOrderTotal] = useState<number>(0);
   const [placing, setPlacing] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
+  const [completedCartItems, setCompletedCartItems] = useState<CartItem[]>([]);
 
   const subtotal = useMemo(
     () => cartItems.reduce((s, i) => s + i.product.price * i.quantity, 0),
@@ -95,10 +96,11 @@ export default function CheckoutStepperPage({
     if (!validate()) { alert('Tüm ödeme bilgilerini gir.'); return; }
     setPlacing(true);
     setPlaceError(null);
+    setCompletedCartItems(cartItems);
     try {
-      const order = await placeOrderApi(userEmail, shipping, payment);
+      const order = await checkoutOrder(shipping, payment);
       setOrderNumber(order.orderNumber);
-      setOrderTotal(order.totalAmount);
+      setOrderTotal(Number(order.totalAmount));
       setCompleted({ 0: true, 1: true, 2: true, 3: true });
       setActiveStep(3);
       onOrderCompleted();
@@ -163,7 +165,12 @@ export default function CheckoutStepperPage({
                     {activeStep === 1 && <ShippingStep shipping={shipping} onChange={handleShippingChange} />}
                     {activeStep === 2 && <PaymentStep payment={payment} onChange={handlePaymentChange} />}
                     {activeStep === 3 && (
-                      <ConfirmationStep cartItems={cartItems} shipping={shipping} payment={payment} total={total} />
+                      <ConfirmationStep
+                        cartItems={completedCartItems.length > 0 ? completedCartItems : cartItems}
+                        shipping={shipping}
+                        payment={payment}
+                        total={orderTotal > 0 ? orderTotal : total}
+                      />
                     )}
 
                     {placeError && <Alert severity="error" sx={{ mt: 2 }}>{placeError}</Alert>}
@@ -232,7 +239,7 @@ function CartReviewStep({ cartItems, onIncrease, onDecrease, onRemove }: {
                 <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: 'center' }} spacing={2}>
                   <Box
                     component="img"
-                    src={item.product.images[0]?.url ? `/uploads/${item.product.images[0].url}` : PLACEHOLDER_IMG}
+                    src={item.product.images[0]?.url || PLACEHOLDER_IMG}
                     alt={item.product.name}
                     sx={{ width: 100, height: 80, objectFit: 'cover', borderRadius: 2 }}
                   />

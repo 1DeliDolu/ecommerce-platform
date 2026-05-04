@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 const techStack = [
   'Java 25',
   'Spring Boot 4',
@@ -53,12 +56,23 @@ const architectureSteps = [
 ];
 
 type HomePageProps = {
-  health: string;
-  productCount: number;
-  onLoginAsAdmin: () => void;
+  health?: string;
+  productCount?: number;
+  onLoginAsAdmin?: () => void;
 };
 
-export default function HomePage({ health, productCount, onLoginAsAdmin }: HomePageProps) {
+export default function HomePage({ health: healthProp, productCount: countProp, onLoginAsAdmin: loginProp }: HomePageProps = {}) {
+  const navigate = useNavigate();
+  const [health, setHealth] = useState(healthProp ?? 'CHECKING...');
+  const [productCount, setProductCount] = useState(countProp ?? 0);
+
+  useEffect(() => {
+    fetch('/api/health').then(r => r.json()).then(d => setHealth(d.status ?? 'UP')).catch(() => setHealth('DOWN'));
+    fetch('/api/products').then(r => r.json()).then(d => setProductCount(Array.isArray(d) ? d.length : 0)).catch(() => {});
+  }, []);
+
+  const onLoginAsAdmin = loginProp ?? (() => navigate('/login'));
+
   return (
     <main className="home-page">
       <section className="home-hero">

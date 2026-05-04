@@ -1,98 +1,110 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
+  Alert,
   Box,
   Button,
+  Card,
+  CardContent,
+  CircularProgress,
   Container,
-  Paper,
+  Divider,
+  Stack,
   TextField,
   Typography,
-  Alert,
-  CircularProgress,
 } from '@mui/material';
-import { tokenStorage } from '../../security/token-storage';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+import LoginIcon from '@mui/icons-material/Login';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const auth = useAuth();
+
   const [email, setEmail] = useState('admin@ecommerce.local');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState('admin123');
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
     setError(null);
-    setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message ?? 'Login failed');
-      }
-      const data = await res.json();
-      tokenStorage.set(data.accessToken);
-      navigate('/admin/products');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setSubmitting(true);
+      await auth.login({ email, password });
+      navigate(auth.hasAnyPermission(['ADMIN_PANEL_ACCESS']) ? '/admin/products' : '/');
+    } catch (err: any) {
+      setError(err.message || 'Login failed.');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
-  };
+  }
 
   return (
-    <Container maxWidth="xs" sx={{ mt: 10 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h5" sx={{ mb: 3, textAlign: 'center', fontWeight: 700 }}>
-          Sign in
-        </Typography>
+    <Box sx={{ bgcolor: '#f5f7fb', minHeight: '100vh', py: 8 }}>
+      <Container maxWidth="sm">
+        <Card elevation={0} sx={{ borderRadius: 5, border: '1px solid', borderColor: 'divider' }}>
+          <CardContent sx={{ p: { xs: 3, md: 5 } }}>
+            <Typography variant="h4" sx={{ fontWeight: 900 }} gutterBottom>
+              Login
+            </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              Role ve permission kontrollü frontend alanlarını test etmek için giriş yap.
+            </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} noValidate>
-          <TextField
-            label="Email"
-            type="email"
-            fullWidth
-            required
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Password"
-            type="password"
-            fullWidth
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{ mb: 3 }}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            disabled={loading}
-            sx={{ py: 1.2 }}
-          >
-            {loading ? <CircularProgress size={22} color="inherit" /> : 'Login'}
-          </Button>
-        </Box>
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <strong>Real backend:</strong> admin@ecommerce.local / admin123<br />
+              <strong>Demo admin:</strong> admin@example.com / (any)<br />
+              <strong>Demo employee:</strong> employee@example.com / (any)
+            </Alert>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 3, textAlign: 'center' }}>
-          Default admin: <strong>admin@ecommerce.local</strong>
-        </Typography>
-      </Paper>
-    </Container>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={3}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  autoFocus
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <TextField
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <Button
+                  type="submit"
+                  size="large"
+                  variant="contained"
+                  startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <LoginIcon />}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Signing in...' : 'Sign In'}
+                </Button>
+              </Stack>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Stack spacing={0.5}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Admin:</strong> full category/product CRUD, all orders
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Employee:</strong> limited product/category CRUD
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Customer:</strong> products, cart and own orders
+              </Typography>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { createCategory, deleteCategory, getCategories, updateCategory } from './categoryApi';
 import { Category, CategoryStatus, CreateCategoryRequest, UpdateCategoryRequest } from './categoryTypes';
+import { useAuth } from "../../auth/AuthContext";
 
 type CategoryFormState = {
   name: string;
@@ -65,13 +66,12 @@ const emptyForm: CategoryFormState = {
 };
 
 export default function AdminCategoriesPage() {
+  const auth = useAuth();
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | CategoryStatus>('ALL');
-  const [role, setRole] = useState<'ADMIN' | 'EMPLOYEE'>('ADMIN');
-  const [employeeCategoryCrud, setEmployeeCategoryCrud] = useState(true);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryFormState>(emptyForm);
   const [lastAction, setLastAction] = useState('Category manager ready.');
@@ -80,13 +80,11 @@ export default function AdminCategoriesPage() {
     void loadCategories();
   }, []);
 
-  const permissions = role === 'ADMIN'
-    ? { canCreateCategory: true, canUpdateCategory: true, canDeleteCategory: true }
-    : {
-        canCreateCategory: employeeCategoryCrud,
-        canUpdateCategory: employeeCategoryCrud,
-        canDeleteCategory: false,
-      };
+  const permissions = {
+    canCreateCategory: auth.hasPermission('CATEGORY_CREATE'),
+    canUpdateCategory: auth.hasPermission('CATEGORY_UPDATE'),
+    canDeleteCategory: auth.hasPermission('CATEGORY_DELETE'),
+  };
 
   const filteredCategories = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();

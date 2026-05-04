@@ -42,3 +42,32 @@ export type OrderSummary = {
   totalAmount: number;
   itemCount: number;
 };
+
+export type CustomerOrderItem = {
+  id: number;
+  productId: number;
+  productName: string;
+  productSlug: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+};
+
+export type CustomerOrder = {
+  id: number;
+  orderNumber: string;
+  status: string;
+  subtotal: number;
+  shippingCost: number;
+  tax: number;
+  totalAmount: number;
+  shippingFullName: string;
+  shippingEmail: string;
+  shippingCity: string;
+  shippingCountry: string;
+  paymentMethod: string;
+  paymentReference: string;
+  createdAt: string;
+  items: CustomerOrderItem[];
+};
+

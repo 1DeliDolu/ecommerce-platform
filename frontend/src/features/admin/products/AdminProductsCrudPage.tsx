@@ -42,6 +42,8 @@ import { Product, ProductImage, ProductRequest, ProductStatus } from './productT
 
 import { getCategories } from '../categories/categoryApi';
 import { Category } from '../categories/categoryTypes';
+import { useAuth } from '../../auth/AuthContext';
+
 
 type ProductFormState = {
   categoryId: string;
@@ -64,6 +66,14 @@ const emptyForm: ProductFormState = {
 };
 
 export default function AdminProductsCrudPage() {
+  const auth = useAuth();
+  const canCreateProduct = auth.hasPermission('PRODUCT_CREATE');
+  const canUpdateProduct = auth.hasPermission('PRODUCT_UPDATE');
+  const canDeleteProduct = auth.hasPermission('PRODUCT_DELETE');
+  const canUploadImage = auth.hasPermission('PRODUCT_IMAGE_UPLOAD');
+  const canDeleteImage = auth.hasPermission('PRODUCT_IMAGE_DELETE');
+  const canSetPrimaryImage = auth.hasPermission('PRODUCT_IMAGE_SET_PRIMARY');
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedImageByProduct, setSelectedImageByProduct] = useState<Record<number, number>>({});
@@ -243,9 +253,11 @@ export default function AdminProductsCrudPage() {
             </Typography>
           </Box>
 
-          <Button variant="contained" size="large" startIcon={<AddIcon />} onClick={handleCreateOpen}>
-            Create Product
-          </Button>
+          {canCreateProduct && (
+            <Button variant="contained" size="large" startIcon={<AddIcon />} onClick={handleCreateOpen}>
+              Create Product
+            </Button>
+          )}
         </Stack>
 
         {loading && (
@@ -317,21 +329,23 @@ export default function AdminProductsCrudPage() {
                     <Box sx={{ mt: 3 }}>
                       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                         <Typography sx={{ fontWeight: 800 }}>Images {product.images.length}/5</Typography>
-                        <Button
-                          component="label"
-                          size="small"
-                          startIcon={<UploadIcon />}
-                          disabled={product.images.length >= 5}
-                        >
-                          Upload
-                          <input
-                            hidden
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            multiple
-                            onChange={(event) => handleUploadImages(product, event.target.files)}
-                          />
-                        </Button>
+                        {canUploadImage && (
+                          <Button
+                            component="label"
+                            size="small"
+                            startIcon={<UploadIcon />}
+                            disabled={product.images.length >= 5}
+                          >
+                            Upload
+                            <input
+                              hidden
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              multiple
+                              onChange={(event) => handleUploadImages(product, event.target.files)}
+                            />
+                          </Button>
+                        )}
                       </Stack>
 
                       <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
@@ -362,17 +376,25 @@ export default function AdminProductsCrudPage() {
                               />
 
                               <Stack direction="row" sx={{ justifyContent: 'center' }} spacing={0.5}>
-                                <IconButton
-                                  size="small"
-                                  color={image.primary ? 'warning' : 'default'}
-                                  onClick={() => handleSetPrimaryImage(product, image)}
-                                >
-                                  {image.primary ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
-                                </IconButton>
+                                {canSetPrimaryImage && (
+                                  <IconButton
+                                    size="small"
+                                    color={image.primary ? 'warning' : 'default'}
+                                    onClick={() => handleSetPrimaryImage(product, image)}
+                                  >
+                                    {image.primary ? (
+                                      <StarIcon fontSize="small" />
+                                    ) : (
+                                      <StarBorderIcon fontSize="small" />
+                                    )}
+                                  </IconButton>
+                                )}
 
-                                <IconButton size="small" color="error" onClick={() => handleDeleteImage(product, image)}>
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
+                                {canDeleteImage && (
+                                  <IconButton size="small" color="error" onClick={() => handleDeleteImage(product, image)}>
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                )}
                               </Stack>
                             </Box>
                           );
@@ -382,12 +404,16 @@ export default function AdminProductsCrudPage() {
                   </CardContent>
 
                   <CardActions sx={{ px: 2, pb: 2 }}>
-                    <Button variant="contained" startIcon={<EditIcon />} onClick={() => handleEditOpen(product)}>
-                      Edit
-                    </Button>
-                    <IconButton color="error" onClick={() => handleDeleteProduct(product)}>
-                      <DeleteIcon />
-                    </IconButton>
+                    {canUpdateProduct && (
+                      <Button variant="contained" startIcon={<EditIcon />} onClick={() => handleEditOpen(product)}>
+                        Edit
+                      </Button>
+                    )}
+                    {canDeleteProduct && (
+                      <IconButton color="error" onClick={() => handleDeleteProduct(product)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
                   </CardActions>
                 </Card>
               </Grid>

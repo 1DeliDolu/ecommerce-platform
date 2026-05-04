@@ -23,14 +23,13 @@ import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
 
 import { CartItem, StoreProduct } from './customerTypes';
 import {
-  addToCartApi,
-  backendCartToLocalCart,
-  fetchCart,
-  fetchStoreProducts,
-  getUserEmail,
-  removeCartItemApi,
-  updateCartItemApi,
-} from './customerApi';
+  addCartItem,
+  getCart,
+  getStoreProducts,
+  removeCartItem,
+  updateCartItem,
+} from '../api/customerApi';
+import { getUserEmail } from './customerApi';
 import CheckoutStepperPage from '../checkout/CheckoutStepperPage';
 
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=900';
@@ -48,17 +47,24 @@ export default function CustomerProductsPage() {
   const userEmail = getUserEmail();
 
   useEffect(() => {
-    Promise.all([
-      fetchStoreProducts(),
-      fetchCart(userEmail),
-    ])
-      .then(([prods, cart]) => {
-        setProducts(prods);
-        setCartItems(backendCartToLocalCart(cart));
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [userEmail]);
+    loadStorefront();
+  }, []);
+
+  async function loadStorefront() {
+    try {
+      setLoading(true);
+      const [productData, cartData] = await Promise.all([
+        getStoreProducts(),
+        getCart(),
+      ]);
+      setProducts(productData);
+      setCartItems(cartData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filteredProducts = useMemo(() => {
     const q = search.toLowerCase();
@@ -84,8 +90,8 @@ export default function CustomerProductsPage() {
     if (product.stockQuantity <= 0) return;
     setCartLoading(true);
     try {
-      const updated = await addToCartApi(userEmail, product.id, 1);
-      setCartItems(backendCartToLocalCart(updated));
+      const updatedCart = await addCartItem(product.id, 1);
+      setCartItems(updatedCart);
     } catch (err: any) {
       setSnack(err.message);
     } finally {
@@ -98,8 +104,8 @@ export default function CustomerProductsPage() {
     if (!item) return;
     setCartLoading(true);
     try {
-      const updated = await updateCartItemApi(userEmail, productId, item.quantity + 1);
-      setCartItems(backendCartToLocalCart(updated));
+      const updatedCart = await updateCartItem(productId, item.quantity + 1);
+      setCartItems(updatedCart);
     } catch (err: any) {
       setSnack(err.message);
     } finally {
@@ -112,10 +118,11 @@ export default function CustomerProductsPage() {
     if (!item) return;
     setCartLoading(true);
     try {
-      const updated = item.quantity <= 1
-        ? await removeCartItemApi(userEmail, productId)
-        : await updateCartItemApi(userEmail, productId, item.quantity - 1);
-      setCartItems(backendCartToLocalCart(updated));
+      const updatedCart =
+        item.quantity <= 1
+          ? await removeCartItem(productId)
+          : await updateCartItem(productId, item.quantity - 1);
+      setCartItems(updatedCart);
     } catch (err: any) {
       setSnack(err.message);
     } finally {
@@ -126,8 +133,8 @@ export default function CustomerProductsPage() {
   const removeFromCart = async (productId: number) => {
     setCartLoading(true);
     try {
-      const updated = await removeCartItemApi(userEmail, productId);
-      setCartItems(backendCartToLocalCart(updated));
+      const updatedCart = await removeCartItem(productId);
+      setCartItems(updatedCart);
     } catch (err: any) {
       setSnack(err.message);
     } finally {
@@ -135,7 +142,10 @@ export default function CustomerProductsPage() {
     }
   };
 
-  const clearCart = () => setCartItems([]);
+  const clearCart = () => {
+    setCartItems([]);
+    loadStorefront();
+  };
 
   if (checkoutOpen) {
     return (
@@ -216,7 +226,7 @@ export default function CustomerProductsPage() {
                 <Grid container spacing={3}>
                   {filteredProducts.map((product) => {
                     const primaryImage = product.images.find((img) => img.primary) ?? product.images[0];
-                    const imgUrl = primaryImage?.url ? `/uploads/${primaryImage.url}` : PLACEHOLDER_IMG;
+                    const imgUrl = primaryImage?.url || PLACEHOLDER_IMG;
 
                     return (
                       <Grid key={product.id} size={{ xs: 12, md: 6, xl: 4 }}>
@@ -356,7 +366,7 @@ function CartSummaryCard({
                 <Stack direction="row" spacing={2}>
                   <Box
                     component="img"
-                    src={item.product.images[0]?.url ? `/uploads/${item.product.images[0].url}` : PLACEHOLDER_IMG}
+                    src={item.product.images[0]?.url || PLACEHOLDER_IMG}
                     alt={item.product.name}
                     sx={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 2 }}
                     onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER_IMG; }}
