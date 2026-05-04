@@ -2,13 +2,24 @@ import { CartItem, CustomerOrder, PaymentInfo, ShippingAddress, StoreProduct } f
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
-export const CUSTOMER_EMAIL =
-  localStorage.getItem('userEmail') || 'customer@example.com';
+function getCustomerEmail(): string {
+  const rawUser = localStorage.getItem('authUser');
+  if (rawUser) {
+    try {
+      const user = JSON.parse(rawUser) as { email?: string };
+      if (user.email) return user.email;
+    } catch {
+      // Fall back to the development customer below.
+    }
+  }
+
+  return localStorage.getItem('userEmail') || 'customer@example.com';
+}
 
 function getJsonHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    'X-User-Email': CUSTOMER_EMAIL,
+    'X-User-Email': getCustomerEmail(),
   };
 }
 

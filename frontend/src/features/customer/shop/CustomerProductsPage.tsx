@@ -20,6 +20,7 @@ import {
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import SearchIcon from '@mui/icons-material/Search';
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import { useNavigate } from 'react-router-dom';
 
 import { CartItem, StoreProduct } from './customerTypes';
 import {
@@ -29,12 +30,11 @@ import {
   removeCartItem,
   updateCartItem,
 } from '../api/customerApi';
-import { getUserEmail } from './customerApi';
-import CheckoutStepperPage from '../checkout/CheckoutStepperPage';
 
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=900';
 
 export default function CustomerProductsPage() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +42,6 @@ export default function CustomerProductsPage() {
   const [cartLoading, setCartLoading] = useState(false);
   const [snack, setSnack] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-
-  const userEmail = getUserEmail();
 
   useEffect(() => {
     loadStorefront();
@@ -142,25 +139,6 @@ export default function CustomerProductsPage() {
     }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    loadStorefront();
-  };
-
-  if (checkoutOpen) {
-    return (
-      <CheckoutStepperPage
-        cartItems={cartItems}
-        userEmail={userEmail}
-        onBackToShop={() => setCheckoutOpen(false)}
-        onIncreaseQuantity={increaseQuantity}
-        onDecreaseQuantity={decreaseQuantity}
-        onRemoveFromCart={removeFromCart}
-        onOrderCompleted={clearCart}
-      />
-    );
-  }
-
   return (
     <Box sx={{ bgcolor: '#f5f7fb', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="xl">
@@ -184,7 +162,7 @@ export default function CustomerProductsPage() {
             size="large"
             startIcon={<ShoppingCartCheckoutIcon />}
             disabled={cartItems.length === 0}
-            onClick={() => setCheckoutOpen(true)}
+            onClick={() => navigate('/checkout')}
           >
             Checkout ({cartItemCount}) — ₺{cartTotal.toFixed(2)}
           </Button>
@@ -306,7 +284,7 @@ export default function CustomerProductsPage() {
               <CartSummaryCard
                 cartItems={cartItems}
                 total={cartTotal}
-                onCheckout={() => setCheckoutOpen(true)}
+                onCheckout={() => navigate('/checkout')}
                 onIncreaseQuantity={increaseQuantity}
                 onDecreaseQuantity={decreaseQuantity}
                 onRemoveFromCart={removeFromCart}

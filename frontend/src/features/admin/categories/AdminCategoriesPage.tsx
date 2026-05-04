@@ -298,25 +298,21 @@ export default function AdminCategoriesPage() {
           <option value="INACTIVE">Inactive</option>
         </select>
 
-        <div className="btn-group" role="group" aria-label="Category permission role">
-          <button type="button" className={`btn ${role === 'ADMIN' ? 'btn-dark' : 'btn-outline-dark'}`} onClick={() => setRole('ADMIN')}>
-            Admin
-          </button>
-          <button type="button" className={`btn ${role === 'EMPLOYEE' ? 'btn-dark' : 'btn-outline-dark'}`} onClick={() => setRole('EMPLOYEE')}>
-            Employee
-          </button>
+        <div className="permission-toggle">
+          <span className="d-block text-muted small">Current role</span>
+          <strong>{auth.user?.role ?? 'UNKNOWN'}</strong>
         </div>
 
-        <label className="permission-toggle form-check form-switch mb-0">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            checked={employeeCategoryCrud}
-            disabled={role === 'ADMIN'}
-            onChange={(event) => setEmployeeCategoryCrud(event.target.checked)}
-          />
-          <span className="form-check-label">Employee category CRUD</span>
-        </label>
+        <div className="permission-toggle">
+          <span className="d-block text-muted small">Category permissions</span>
+          <strong>
+            {[
+              permissions.canCreateCategory && 'Create',
+              permissions.canUpdateCategory && 'Update',
+              permissions.canDeleteCategory && 'Delete',
+            ].filter(Boolean).join(' / ') || 'Read only'}
+          </strong>
+        </div>
       </section>
 
       <section className="category-form mb-4" aria-label="Create or edit category">

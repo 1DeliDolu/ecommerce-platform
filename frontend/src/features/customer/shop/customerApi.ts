@@ -100,6 +100,15 @@ export function backendCartToLocalCart(backend: BackendCartResponse): CartItem[]
 }
 
 export function getUserEmail(): string {
+  const rawUser = localStorage.getItem('authUser');
+  if (rawUser) {
+    try {
+      const user = JSON.parse(rawUser) as { email?: string };
+      if (user.email) return user.email;
+    } catch {
+      // Fall back to the development customer below.
+    }
+  }
+
   return localStorage.getItem('userEmail') || 'customer@demo.com';
 }
-

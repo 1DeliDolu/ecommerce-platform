@@ -6,6 +6,7 @@ import AdminLayout from './layouts/AdminLayout';
 
 import HomePage from '../features/home/HomePage';
 import CustomerProductsPage from '../features/customer/shop/CustomerProductsPage';
+import CustomerCheckoutPage from '../features/customer/checkout/CustomerCheckoutPage';
 import CustomerOrdersPage from '../features/customer/orders/CustomerOrdersPage';
 import AdminCategoriesPage from '../features/admin/categories/AdminCategoriesPage';
 import AdminProductsCrudPage from '../features/admin/products/AdminProductsCrudPage';
@@ -25,6 +26,7 @@ export const appRoutes: RouteObject[] = [
         element: <RequireAuth roles={['CUSTOMER', 'ADMIN', 'EMPLOYEE']} />,
         children: [
           { path: 'orders', element: <CustomerOrdersPage /> },
+          { path: 'checkout', element: <CustomerCheckoutPage /> },
         ],
       },
       { path: 'profile', element: <Navigate to="/" replace /> },

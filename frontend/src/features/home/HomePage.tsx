@@ -1,59 +1,75 @@
 import { useEffect, useState } from 'react';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  Divider,
+  Grid,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CategoryIcon from '@mui/icons-material/Category';
+import CloudQueueIcon from '@mui/icons-material/CloudQueue';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import SecurityIcon from '@mui/icons-material/Security';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import { useNavigate } from 'react-router-dom';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 const techStack = [
   'Java 25',
-  'Spring Boot 4',
+  'Spring Boot',
   'React',
   'TypeScript',
   'PostgreSQL',
   'Docker',
   'Prometheus',
   'Grafana',
-  'JWT / RBAC',
 ];
 
 const modules = [
   {
-    icon: 'bi-bag-check',
-    title: 'E-Commerce Domain',
-    text: 'Product, category, inventory, cart, checkout and order-management foundations.',
+    icon: <StorefrontIcon />,
+    title: 'Storefront',
+    text: 'Müşteri ürün listeleme, arama, sepet yönetimi ve checkout akışı.',
   },
   {
-    icon: 'bi-shield-lock',
-    title: 'Security Layer',
-    text: 'JWT authentication, role-aware product administration and hardened local configuration.',
+    icon: <Inventory2Icon />,
+    title: 'Product Operations',
+    text: 'Kategori bağlı ürün CRUD, stok, fiyat, status ve fotoğraf yönetimi.',
   },
   {
-    icon: 'bi-database',
-    title: 'PostgreSQL Data Store',
-    text: 'Relational product and user data with seed records for local development.',
+    icon: <CategoryIcon />,
+    title: 'Category Control',
+    text: 'Kategori CRUD, slug standardı ve ürün klasör yapısı yönetimi.',
   },
   {
-    icon: 'bi-box-seam',
-    title: 'Container Workflow',
-    text: 'Docker Compose orchestration for frontend, backend, database and observability services.',
+    icon: <SecurityIcon />,
+    title: 'JWT / RBAC',
+    text: 'Login sonrası role ve permission bilgisiyle route guard ve menü kontrolü.',
   },
   {
-    icon: 'bi-activity',
+    icon: <ShoppingCartCheckoutIcon />,
+    title: 'Checkout',
+    text: 'Adres, ödeme simülasyonu, sipariş oluşturma ve sipariş geçmişi.',
+  },
+  {
+    icon: <AnalyticsIcon />,
     title: 'Observability',
-    text: 'Spring actuator metrics scraped by Prometheus and visualized through Grafana.',
-  },
-  {
-    icon: 'bi-kanban',
-    title: 'Admin Operations',
-    text: 'Product management UI with images, permissions, filters and CRUD-ready controls.',
+    text: 'Actuator, Prometheus, Grafana ve Docker tabanlı geliştirme ortamı.',
   },
 ];
 
-const architectureSteps = [
-  'React Frontend',
-  'Spring Boot API',
-  'PostgreSQL OLTP',
-  'JWT / RBAC',
-  'Prometheus Metrics',
-  'Grafana Dashboard',
-];
+const flow = ['React UI', 'Route Guard', 'Spring API', 'PostgreSQL', 'MailHog', 'Metrics'];
 
 type HomePageProps = {
   health?: string;
@@ -61,230 +77,200 @@ type HomePageProps = {
   onLoginAsAdmin?: () => void;
 };
 
-export default function HomePage({ health: healthProp, productCount: countProp, onLoginAsAdmin: loginProp }: HomePageProps = {}) {
+export default function HomePage({
+  health: healthProp,
+  productCount: countProp,
+  onLoginAsAdmin: loginProp,
+}: HomePageProps = {}) {
   const navigate = useNavigate();
-  const [health, setHealth] = useState(healthProp ?? 'CHECKING...');
+  const [health, setHealth] = useState(healthProp ?? 'CHECKING');
   const [productCount, setProductCount] = useState(countProp ?? 0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/health').then(r => r.json()).then(d => setHealth(d.status ?? 'UP')).catch(() => setHealth('DOWN'));
-    fetch('/api/products').then(r => r.json()).then(d => setProductCount(Array.isArray(d) ? d.length : 0)).catch(() => {});
+    let cancelled = false;
+
+    async function loadDashboard() {
+      try {
+        setLoading(true);
+        const [healthResponse, productResponse] = await Promise.allSettled([
+          fetch(`${API_BASE_URL}/api/health`).then((response) => response.json()),
+          fetch(`${API_BASE_URL}/api/products`).then((response) => response.json()),
+        ]);
+
+        if (cancelled) return;
+
+        if (healthResponse.status === 'fulfilled') {
+          setHealth(healthResponse.value.status ?? 'UP');
+        } else {
+          setHealth('DOWN');
+        }
+
+        if (productResponse.status === 'fulfilled' && Array.isArray(productResponse.value)) {
+          setProductCount(productResponse.value.length);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadDashboard();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const onLoginAsAdmin = loginProp ?? (() => navigate('/login'));
 
   return (
-    <main className="home-page">
-      <section className="home-hero">
-        <div className="container-xl">
-          <div className="row align-items-center g-5">
-            <div className="col-12 col-lg-7">
-              <span className="badge text-bg-warning fw-bold mb-3">Enterprise Capstone Project</span>
-              <h1 className="display-4 fw-black mb-3">Enterprise E-Commerce Data Architecture Platform</h1>
-              <p className="lead text-secondary mb-4">
-                Full-stack, security-focused e-commerce platform built with Java 25 Spring Boot,
-                React TypeScript, PostgreSQL, Docker, Prometheus and Grafana.
-              </p>
+    <Box sx={{ bgcolor: '#f5f7fb', minHeight: '100vh' }}>
+      <Box
+        component="section"
+        sx={{
+          bgcolor: '#ffffff',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          py: { xs: 6, lg: 9 },
+        }}
+      >
+        <Container maxWidth="xl">
+          <Grid container spacing={4} sx={{ alignItems: 'center' }}>
+            <Grid size={{ xs: 12, lg: 7 }}>
+              <Chip
+                icon={<CloudQueueIcon />}
+                label="Enterprise E-Commerce Platform"
+                color="primary"
+                variant="outlined"
+                sx={{ mb: 2, fontWeight: 800 }}
+              />
+              <Typography variant="h2" sx={{ fontWeight: 900, maxWidth: 820, fontSize: { xs: 38, md: 58 } }}>
+                Modern admin, storefront ve checkout akışı tek projede.
+              </Typography>
+              <Typography color="text.secondary" sx={{ mt: 2, maxWidth: 760, fontSize: 18 }}>
+                Java 25 Spring Boot backend, React TypeScript frontend, PostgreSQL, Docker,
+                JWT permission guard ve gözlemlenebilirlik bileşenleriyle uçtan uca çalışan e-commerce lab.
+              </Typography>
 
-              <div className="d-flex flex-wrap gap-2 mb-4">
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 4 }}>
+                <Button variant="contained" size="large" endIcon={<ArrowForwardIcon />} onClick={() => navigate('/products')}>
+                  Storefront
+                </Button>
+                <Button variant="outlined" size="large" startIcon={<AdminPanelSettingsIcon />} onClick={onLoginAsAdmin}>
+                  Admin Login
+                </Button>
+              </Stack>
+
+              <Stack direction="row" spacing={1} sx={{ mt: 4, flexWrap: 'wrap', gap: 1 }}>
                 {techStack.map((item) => (
-                  <span className="badge rounded-pill text-bg-light border px-3 py-2" key={item}>
-                    {item}
-                  </span>
+                  <Chip key={item} label={item} sx={{ bgcolor: '#eef2f7', fontWeight: 700 }} />
                 ))}
-              </div>
+              </Stack>
+            </Grid>
 
-              <div className="d-flex flex-column flex-sm-row gap-2">
-                <a className="btn btn-dark btn-lg" href="#admin-products">
-                  <i className="bi bi-grid-3x3-gap me-2" aria-hidden="true"></i>
-                  Manage Products
-                </a>
-                <button className="btn btn-outline-dark btn-lg" type="button" onClick={onLoginAsAdmin}>
-                  <i className="bi bi-shield-check me-2" aria-hidden="true"></i>
-                  Demo Admin JWT
-                </button>
-              </div>
-            </div>
+            <Grid size={{ xs: 12, lg: 5 }}>
+              <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                  <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 900 }}>Platform Status</Typography>
+                      <Typography color="text.secondary">Local Docker geliştirme görünümü</Typography>
+                    </Box>
+                    <Chip label={health} color={health === 'UP' ? 'success' : health === 'DOWN' ? 'error' : 'default'} />
+                  </Stack>
 
-            <div className="col-12 col-lg-5">
-              <div className="platform-status-panel">
-                <div className="d-flex justify-content-between align-items-start mb-4">
-                  <div>
-                    <h2 className="h4 fw-bold mb-1">Platform Status</h2>
-                    <p className="text-secondary mb-0">Dockerized local enterprise lab</p>
-                  </div>
-                  <span className={`badge ${health === 'UP' ? 'text-bg-success' : 'text-bg-secondary'}`}>
-                    {health}
-                  </span>
-                </div>
+                  {loading && <LinearProgress sx={{ mb: 3 }} />}
 
-                <div className="status-metrics">
-                  <MetricCard icon="bi-hdd-network" label="Backend" value={health} />
-                  <MetricCard icon="bi-bag" label="Catalog API" value={`${productCount}`} />
-                  <MetricCard icon="bi-database-check" label="Database" value="Postgres" />
-                  <MetricCard icon="bi-graph-up" label="Metrics" value="Grafana" />
-                </div>
+                  <Grid container spacing={2}>
+                    <MetricCard label="Backend" value={health} />
+                    <MetricCard label="Catalog" value={`${productCount} products`} />
+                    <MetricCard label="Database" value="PostgreSQL" />
+                    <MetricCard label="Runtime" value="Java 25" />
+                  </Grid>
 
-                <div className="border-top pt-4 mt-4">
-                  <h3 className="h6 fw-bold">Learning goal</h3>
-                  <p className="text-secondary mb-0">
-                    Practice backend engineering, secure configuration, product administration,
-                    database design and observability in one runnable project.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+                  <Divider sx={{ my: 3 }} />
+                  <Typography sx={{ fontWeight: 900, mb: 1 }}>Route coverage</Typography>
+                  <Stack spacing={1}>
+                    {['/products', '/orders', '/admin/products', '/admin/categories', '/login'].map((route) => (
+                      <Stack key={route} direction="row" sx={{ justifyContent: 'space-between' }}>
+                        <Typography color="text.secondary">{route}</Typography>
+                        <Chip label="ready" size="small" color="success" variant="outlined" />
+                      </Stack>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
 
-      <section className="container-xl py-5">
-        <div className="row g-4">
-          <div className="col-12 col-lg-4">
-            <h2 className="fw-bold">Genel Açıklama</h2>
-            <p className="text-secondary">
-              Bu proje klasik bir alışveriş sitesi değil; backend, frontend, database,
-              monitoring ve security katmanlarını birlikte çalıştıran portfolyo odaklı
-              bir enterprise lab uygulamasıdır.
-            </p>
-          </div>
-          <div className="col-12 col-lg-8">
-            <div className="row g-3">
-              <InfoCard title="Amaç" text="Java 25, Spring Boot, React ve PostgreSQL ile uçtan uca çalışan e-commerce mimarisi geliştirmek." />
-              <InfoCard title="Kapsam" text="Product admin, image management, JWT login, Docker workflow, metrics and dashboard assets." />
-              <InfoCard title="Portfolyo Değeri" text="Mülakatta anlatılabilir mimari, çalışan Docker ortamı ve üretime yaklaşan geliştirme disiplini." />
-            </div>
-          </div>
-        </div>
-      </section>
+      <Container maxWidth="xl" sx={{ py: 5 }}>
+        <Grid container spacing={3}>
+          {modules.map((module) => (
+            <Grid key={module.title} size={{ xs: 12, md: 6, xl: 4 }}>
+              <Card elevation={0} sx={{ height: '100%', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box
+                    sx={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 2,
+                      bgcolor: '#111827',
+                      color: '#ffffff',
+                      display: 'grid',
+                      placeItems: 'center',
+                      mb: 2,
+                    }}
+                  >
+                    {module.icon}
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>{module.title}</Typography>
+                  <Typography color="text.secondary" sx={{ mt: 1 }}>{module.text}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
 
-      <section className="home-modules py-5">
-        <div className="container-xl">
-          <div className="text-center mb-4">
-            <h2 className="fw-bold">Core Modules</h2>
-            <p className="text-secondary mb-0">Her modül gerçek bir enterprise geliştirme problemini temsil eder.</p>
-          </div>
-
-          <div className="row g-4">
-            {modules.map((module) => (
-              <div className="col-12 col-md-6 col-xl-4" key={module.title}>
-                <article className="module-card h-100">
-                  <div className="module-icon">
-                    <i className={`bi ${module.icon}`} aria-hidden="true"></i>
-                  </div>
-                  <h3 className="h5 fw-bold">{module.title}</h3>
-                  <p className="text-secondary mb-0">{module.text}</p>
-                </article>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="architecture-section py-5">
-        <div className="container-xl">
-          <div className="row align-items-center g-5">
-            <div className="col-12 col-lg-4">
-              <h2 className="fw-bold">Architecture Flow</h2>
-              <p className="mb-0">
-                Kullanıcı isteği frontend’den backend API’ye gider. Transactional data
-                PostgreSQL’e yazılır. Actuator metrikleri Prometheus tarafından toplanır
-                ve Grafana dashboardlarıyla izlenir.
-              </p>
-            </div>
-            <div className="col-12 col-lg-8">
-              <div className="architecture-grid">
-                {architectureSteps.map((step, index) => (
-                  <div className="architecture-step" key={step}>
-                    <span>Step {index + 1}</span>
-                    <strong>{step}</strong>
-                  </div>
+      <Box component="section" sx={{ bgcolor: '#111827', color: '#ffffff', py: 5 }}>
+        <Container maxWidth="xl">
+          <Grid container spacing={4} sx={{ alignItems: 'center' }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Typography variant="h4" sx={{ fontWeight: 900 }}>Architecture Flow</Typography>
+              <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.7)' }}>
+                Frontend route guard ile kullanıcıyı ayırır, backend transactional işlemleri yönetir,
+                Postgres kalıcı veri sağlar, MailHog ve metrics servisleri geliştirme ortamını tamamlar.
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Grid container spacing={1.5}>
+                {flow.map((step, index) => (
+                  <Grid key={step} size={{ xs: 6, md: 4 }}>
+                    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.08)' }}>
+                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)' }}>
+                        Step {index + 1}
+                      </Typography>
+                      <Typography sx={{ fontWeight: 900 }}>{step}</Typography>
+                    </Box>
+                  </Grid>
                 ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container-xl py-5">
-        <div className="row g-4">
-          <div className="col-12 col-lg-5">
-            <h2 className="fw-bold">Contact / Feedback</h2>
-            <p className="text-secondary">
-              Proje hakkında demo isteği, teknik soru veya portfolyo geri bildirimi için
-              kullanılabilecek örnek iletişim alanı.
-            </p>
-
-            <ContactLine icon="bi-envelope" title="Email" text="musta@example.com" />
-            <ContactLine icon="bi-github" title="Repository" text="enterprise-ecommerce-data-platform" />
-            <ContactLine icon="bi-speedometer2" title="Monitoring" text="Prometheus + Grafana dashboards" />
-          </div>
-
-          <div className="col-12 col-lg-7">
-            <form className="contact-card">
-              <div className="row g-3">
-                <div className="col-12 col-md-6">
-                  <label className="form-label">Name</label>
-                  <input className="form-control" placeholder="Your name" />
-                </div>
-                <div className="col-12 col-md-6">
-                  <label className="form-label">Email</label>
-                  <input className="form-control" type="email" placeholder="your@email.com" />
-                </div>
-                <div className="col-12">
-                  <label className="form-label">Subject</label>
-                  <input className="form-control" placeholder="Project feedback" />
-                </div>
-                <div className="col-12">
-                  <label className="form-label">Message</label>
-                  <textarea className="form-control" rows={5} placeholder="Write your message..." />
-                </div>
-                <div className="col-12">
-                  <button className="btn btn-dark btn-lg" type="button">
-                    Send Message
-                    <i className="bi bi-send ms-2" aria-hidden="true"></i>
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-    </main>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+    </Box>
   );
 }
 
-function MetricCard({ icon, label, value }: { icon: string; label: string; value: string }) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="metric-card">
-      <i className={`bi ${icon}`} aria-hidden="true"></i>
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function InfoCard({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="col-12 col-md-4">
-      <article className="info-card h-100">
-        <h3 className="h5 fw-bold">{title}</h3>
-        <p className="text-secondary mb-0">{text}</p>
-      </article>
-    </div>
-  );
-}
-
-function ContactLine({ icon, title, text }: { icon: string; title: string; text: string }) {
-  return (
-    <div className="contact-line">
-      <span>
-        <i className={`bi ${icon}`} aria-hidden="true"></i>
-      </span>
-      <div>
-        <strong>{title}</strong>
-        <p className="text-secondary mb-0">{text}</p>
-      </div>
-    </div>
+    <Grid size={{ xs: 12, sm: 6 }}>
+      <Box sx={{ p: 2, borderRadius: 2, bgcolor: '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="body2" color="text.secondary">{label}</Typography>
+        <Typography sx={{ fontWeight: 900, mt: 0.5 }}>{value}</Typography>
+      </Box>
+    </Grid>
   );
 }
