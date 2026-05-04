@@ -13,6 +13,8 @@ import java.util.Map;
 
 @Service
 public class JwtService {
+    private static final int MIN_SECRET_BYTES = 32;
+
     private final SecretKey key;
     private final long expirationMinutes;
 
@@ -20,8 +22,22 @@ public class JwtService {
             @Value("${security.jwt.secret}") String secret,
             @Value("${security.jwt.expiration-minutes}") long expirationMinutes
     ) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] secretBytes = validateSecret(secret);
+        this.key = Keys.hmacShaKeyFor(secretBytes);
         this.expirationMinutes = expirationMinutes;
+    }
+
+    private byte[] validateSecret(String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT secret must be configured");
+        }
+
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException("JWT secret must be at least 32 bytes for HS256 signing");
+        }
+
+        return secretBytes;
     }
 
     public String createToken(String subject, String role) {
