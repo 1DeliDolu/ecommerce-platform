@@ -62,7 +62,7 @@
       "id": 6,
       "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "none"}},
       "targets": [
-        {"expr": "increase(ecommerce_orders_created_total[15m])", "refId": "A"},
+        {"expr": "increase(ecommerce_orders_total[15m])", "refId": "A"},
         {"expr": "increase(ecommerce_orders_payment_failures_total[15m])", "refId": "B"}
       ],
       "title": "Orders Created / Payments Failed",
@@ -84,7 +84,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
       "id": 8,
       "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "none"}},
-      "targets": [{"expr": "pg_stat_database_numbackends{datname=\"ecommerce\"}", "refId": "A"}],
+      "targets": [{"expr": "sum(pg_stat_database_numbackends{datname=\"ecommerce\"}) or on() vector(0)", "refId": "A"}],
       "title": "PostgreSQL Connection Count",
       "type": "timeseries"
     },
@@ -94,7 +94,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
       "id": 9,
       "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "none"}},
-      "targets": [{"expr": "sum(kafka_consumergroup_lag) by (consumergroup, topic)", "refId": "A"}],
+      "targets": [{"expr": "clamp_min(sum(kafka_consumergroup_lag) by (consumergroup, topic), 0) or on() vector(0)", "refId": "A"}],
       "title": "Kafka Consumer Lag",
       "type": "timeseries"
     },
@@ -104,7 +104,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
       "id": 10,
       "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "none"}},
-      "targets": [{"expr": "rabbitmq_queue_messages", "refId": "A"}],
+      "targets": [{"expr": "sum(rabbitmq_queue_messages) or on() vector(0)", "refId": "A"}],
       "title": "RabbitMQ Queue Size",
       "type": "timeseries"
     }
@@ -117,6 +117,6 @@
   "timezone": "browser",
   "title": "Ecommerce Observability Overview",
   "uid": "ecommerce-backend-overview",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }

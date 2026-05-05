@@ -351,8 +351,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-ecommerce_user}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}?sslmode=require"
+    secrets:
+      - postgres_password
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        export DATA_SOURCE_NAME="postgresql://${POSTGRES_USER:-ecommerce_user}:$$(cat /run/secrets/postgres_password)@postgres:5432/${POSTGRES_DB:-ecommerce}?sslmode=require"
+        exec /bin/postgres_exporter
     networks:
       - backend-net
 
