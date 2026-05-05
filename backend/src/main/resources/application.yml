@@ -10,13 +10,13 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:change_me}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
   flyway:
-    enabled: false
+    enabled: true
   mail:
     host: ${SPRING_MAIL_HOST:localhost}
     port: ${SPRING_MAIL_PORT:1025}

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -28,10 +29,12 @@ public class DataInitializer implements ApplicationRunner {
 
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
-    public DataInitializer(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -46,8 +49,10 @@ public class DataInitializer implements ApplicationRunner {
             existing -> {
                 existing.setPasswordHash(passwordEncoder.encode(password));
                 existing.setFullName(fullName);
+                existing.setRole(role);
                 existing.setPermissions(permissions);
-                appUserRepository.save(existing);
+                AppUser saved = appUserRepository.save(existing);
+                syncRoleRelation(saved, role);
                 log.info("User refreshed: {}", email);
             },
             () -> {
@@ -58,9 +63,21 @@ public class DataInitializer implements ApplicationRunner {
                 user.setRole(role);
                 user.setPermissions(permissions);
                 user.setEnabled(true);
-                appUserRepository.save(user);
+                AppUser saved = appUserRepository.save(user);
+                syncRoleRelation(saved, role);
                 log.info("User created: {} ({})", email, role);
             }
+        );
+    }
+
+    private void syncRoleRelation(AppUser user, String role) {
+        jdbcTemplate.update("DELETE FROM user_roles WHERE user_id = ?", user.getId());
+        jdbcTemplate.update(
+                "INSERT INTO user_roles (user_id, role_id) " +
+                "SELECT ?, r.id FROM roles r WHERE r.name = ? " +
+                "ON CONFLICT DO NOTHING",
+                user.getId(),
+                role
         );
     }
 }

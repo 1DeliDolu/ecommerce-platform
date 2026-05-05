@@ -65,17 +65,17 @@ export default function ModernNavbar() {
   const [navDrawerOpen, setNavDrawerOpen] = useState(false);
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
 
-  const adminVisible = auth.hasAnyPermission(['PRODUCT_READ', 'CATEGORY_READ']);
+  const adminVisible = auth.hasRole(['ADMIN']);
 
   const navItems = useMemo<NavItem[]>(
     () => [
       { label: 'Home', to: '/', icon: <HomeIcon />, visible: true },
       { label: 'Products', to: '/products', icon: <StorefrontIcon />, visible: true },
-      { label: 'Orders', to: '/orders', icon: <ReceiptLongIcon />, visible: auth.isAuthenticated },
-      { label: 'Admin Products', to: '/admin/products', icon: <Inventory2Icon />, visible: auth.hasPermission('PRODUCT_READ') },
-      { label: 'Admin Categories', to: '/admin/categories', icon: <CategoryIcon />, visible: auth.hasPermission('CATEGORY_READ') },
+      { label: 'My Order', to: '/orders', icon: <ReceiptLongIcon />, visible: auth.isAuthenticated },
+      { label: 'Admin Products', to: '/admin/products', icon: <Inventory2Icon />, visible: adminVisible },
+      { label: 'Admin Categories', to: '/admin/categories', icon: <CategoryIcon />, visible: adminVisible },
     ],
-    [auth]
+    [adminVisible, auth]
   );
 
   const visibleItems = navItems.filter((item) => item.visible);
