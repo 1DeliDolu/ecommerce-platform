@@ -764,6 +764,8 @@ Suggested screenshots:
 | Redis-backed token blocklist | Planned |
 | CAPTCHA or progressive login delay | Planned |
 | GitHub Actions CI pipeline | ✅ Done |
+| Gitleaks secret scan in CI | ✅ Done |
+| Trivy image scan in CI | ✅ Done |
 | OWASP ZAP / SonarQube integration | Planned |
 | HTTPS termination with nginx or Traefik | Planned |
 | Kubernetes / Helm deployment | Future |
