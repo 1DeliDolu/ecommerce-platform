@@ -10,9 +10,9 @@
 ![Docker](https://img.shields.io/badge/Docker%20Compose-v2.24%2B-blue)
 ![Security](https://img.shields.io/badge/Security-RS256%20%7C%20RBAC%20%7C%20TLS-green)
 
-A production-style full-stack ecommerce platform built as a portfolio project.
+A production-style ecommerce platform demonstrating event-driven microservice patterns.
 
-This project demonstrates a modern backend architecture with secure authentication, role-based authorization, event-driven messaging, observability, automated ETL pipelines, and a PostgreSQL-backed data warehouse — all runnable locally with Docker Compose.
+This project demonstrates a modern backend architecture with secure authentication, role-based authorization, event-driven messaging, observability, automated ETL pipelines, and a PostgreSQL-backed data warehouse as a portfolio-grade production simulation — all runnable locally with Docker Compose.
 
 ---
 

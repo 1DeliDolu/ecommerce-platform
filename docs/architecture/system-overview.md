@@ -2,7 +2,7 @@
 
 ## What This Project Is
 
-A production-grade e-commerce platform built as a portfolio project demonstrating full-stack engineering, distributed systems, observability, and security hardening. It is intentionally over-engineered for a demo store — the goal is to showcase architectural decisions rather than ship a minimal viable product.
+A production-style e-commerce platform built as a portfolio project demonstrating full-stack engineering, distributed systems, observability, and security hardening. It is intentionally over-engineered for a demo store — the goal is to showcase architectural decisions rather than ship a minimal viable product.
 
 ## High-Level Architecture
 

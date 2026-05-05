@@ -2,6 +2,9 @@
 
 All REST endpoints exposed by the Spring Boot backend. Base URL: `http://localhost:8080`
 
+RabbitMQ Management UI (dev): `http://localhost:15672`  
+Credentials (dev default): `ecommerce / ecommerce`
+
 ---
 
 ## Authentication

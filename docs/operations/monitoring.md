@@ -169,6 +169,9 @@ rabbitmq_queue_messages{queue="mail.send.dlq"} > 0
 URL: http://localhost:3001  
 Credentials: `admin` / `admin` (change on first login)
 
+RabbitMQ Management UI (dev): `http://localhost:15672`  
+Credentials (dev default): `ecommerce / ecommerce`
+
 ### Provisioned Datasource
 
 Prometheus is auto-configured at startup: `http://prometheus:9090`
