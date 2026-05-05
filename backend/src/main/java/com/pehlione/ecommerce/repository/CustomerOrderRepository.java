@@ -10,4 +10,7 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     @Query("SELECT o FROM CustomerOrder o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product WHERE o.userEmail = :userEmail ORDER BY o.createdAt DESC")
     List<CustomerOrder> findByUserEmailOrderByCreatedAtDesc(String userEmail);
+
+    @Query("SELECT DISTINCT o FROM CustomerOrder o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product ORDER BY o.createdAt DESC")
+    List<CustomerOrder> findAllOrderByCreatedAtDesc();
 }

@@ -20,7 +20,7 @@ import {
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import SearchIcon from '@mui/icons-material/Search';
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { useCart } from '../CartContext';
 import { StoreProduct } from './customerTypes';
@@ -194,7 +194,14 @@ export default function CustomerProductsPage() {
 
                       <CardActions sx={{ p: 2, pt: 0 }}>
                         <Button
-                          fullWidth
+                          component={RouterLink}
+                          to={`/products/${product.id}`}
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        >
+                          Detay
+                        </Button>
+                        <Button
                           variant="contained"
                           startIcon={<AddShoppingCartIcon />}
                           disabled={product.stockQuantity <= 0 || cartLoading}

@@ -138,6 +138,10 @@ services:
         condition: service_healthy
       mailhog:
         condition: service_started
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ecommerce}?sslmode=verify-full&sslrootcert=/certs/ca.crt"
@@ -146,6 +150,7 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       SPRING_MAIL_HOST: mailhog
       SPRING_MAIL_PORT: 1025
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       APP_MAIL_FROM: ${APP_MAIL_FROM:-no-reply@enterprise-shop.local}
       APP_MAIL_ADMIN_TO: ${APP_MAIL_ADMIN_TO:-admin@example.com}
     secrets:
@@ -170,6 +175,60 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+    networks:
+      - backend-net
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: ecommerce-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "${KAFKA_PORT:-9094}:9094"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --list >/dev/null 2>&1"]
+      <<: *healthcheck-defaults
+    networks:
+      - backend-net
+
+  kafka-init:
+    image: bitnami/kafka:3.7
+    container_name: ecommerce-kafka-init
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./kafka/create-topics.sh:/scripts/create-topics.sh:ro
+    command: ["/bin/bash", "/scripts/create-topics.sh"]
+    networks:
+      - backend-net
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ecommerce-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ecommerce-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "${KAFKA_UI_PORT:-8085}:8080"
     networks:
       - backend-net
 
@@ -255,6 +314,7 @@ volumes:
   pgadmin_data:
   prometheus_data:
   grafana_data:
+  kafka_data:
 
 networks:
   backend-net:

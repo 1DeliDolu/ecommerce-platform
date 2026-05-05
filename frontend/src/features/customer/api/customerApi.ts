@@ -78,6 +78,12 @@ export async function getStoreProducts(): Promise<StoreProduct[]> {
   return data.map(mapProduct);
 }
 
+export async function getStoreProduct(id: number): Promise<StoreProduct> {
+  const response = await fetch(`${API_BASE_URL}/api/products/${id}`);
+  const data = await handleResponse<BackendProduct>(response);
+  return mapProduct(data);
+}
+
 export async function getCart(): Promise<CartItem[]> {
   const response = await fetch(`${API_BASE_URL}/api/cart`, {
     headers: getJsonHeaders(),

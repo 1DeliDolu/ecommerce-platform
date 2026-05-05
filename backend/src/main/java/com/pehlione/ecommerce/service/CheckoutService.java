@@ -2,6 +2,8 @@ package com.pehlione.ecommerce.service;
 
 import com.pehlione.ecommerce.domain.*;
 import com.pehlione.ecommerce.dto.customer.*;
+import com.pehlione.ecommerce.event.KafkaEventPublisher;
+import com.pehlione.ecommerce.event.KafkaTopics;
 import com.pehlione.ecommerce.notification.MailNotificationEvent;
 import com.pehlione.ecommerce.notification.NotificationTemplateService;
 import com.pehlione.ecommerce.repository.CartItemRepository;
@@ -17,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class CheckoutService {
@@ -26,6 +29,7 @@ public class CheckoutService {
     private final ProductRepository productRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationTemplateService notificationTemplateService;
+    private final KafkaEventPublisher kafkaEventPublisher;
     private final Counter orderCreatedCounter;
     private final Counter paymentFailureCounter;
 
@@ -34,12 +38,14 @@ public class CheckoutService {
                            ProductRepository productRepository,
                            ApplicationEventPublisher eventPublisher,
                            NotificationTemplateService notificationTemplateService,
+                           KafkaEventPublisher kafkaEventPublisher,
                            MeterRegistry meterRegistry) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.eventPublisher = eventPublisher;
         this.notificationTemplateService = notificationTemplateService;
+        this.kafkaEventPublisher = kafkaEventPublisher;
         this.orderCreatedCounter = Counter.builder("ecommerce.orders.created")
                 .description("Total orders placed")
                 .register(meterRegistry);
@@ -107,6 +113,28 @@ public class CheckoutService {
                 "Order Confirmation - " + savedOrder.getOrderNumber(),
                 notificationTemplateService.orderConfirmationHtml(savedOrder)
         ));
+        kafkaEventPublisher.publish(
+                KafkaTopics.ORDER_CREATED,
+                "order-service",
+                Map.of(
+                        "orderId", savedOrder.getId(),
+                        "orderNumber", savedOrder.getOrderNumber(),
+                        "userEmail", savedOrder.getUserEmail(),
+                        "status", savedOrder.getStatus().name(),
+                        "totalAmount", savedOrder.getTotalAmount(),
+                        "itemCount", savedOrder.getItems().size()
+                )
+        );
+        kafkaEventPublisher.publish(
+                KafkaTopics.PAYMENT_COMPLETED,
+                "payment-service",
+                Map.of(
+                        "orderId", savedOrder.getId(),
+                        "paymentReference", savedOrder.getPaymentReference(),
+                        "amount", savedOrder.getTotalAmount(),
+                        "method", savedOrder.getPaymentMethod()
+                )
+        );
 
         return new OrderResponse(savedOrder);
     }

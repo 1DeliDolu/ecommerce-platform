@@ -6,6 +6,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.pehlione.ecommerce.domain.AppUser;
 import com.pehlione.ecommerce.dto.LoginRequest;
+import com.pehlione.ecommerce.event.KafkaEventPublisher;
 import com.pehlione.ecommerce.repository.AppUserRepository;
 import com.pehlione.ecommerce.security.JwtService;
 import com.pehlione.ecommerce.security.LoginAttemptAuditService;
@@ -42,6 +43,7 @@ class AuthControllerTest {
                 jwtService,
                 refreshTokenService(),
                 loginAttemptAuditService(),
+                kafkaEventPublisher(),
                 meterRegistry
         );
 
@@ -70,6 +72,7 @@ class AuthControllerTest {
                 jwtService,
                 refreshTokenService(),
                 loginAttemptAuditService(),
+                kafkaEventPublisher(),
                 meterRegistry
         );
 
@@ -114,5 +117,9 @@ class AuthControllerTest {
 
     private LoginAttemptAuditService loginAttemptAuditService() {
         return mock(LoginAttemptAuditService.class);
+    }
+
+    private KafkaEventPublisher kafkaEventPublisher() {
+        return mock(KafkaEventPublisher.class);
     }
 }

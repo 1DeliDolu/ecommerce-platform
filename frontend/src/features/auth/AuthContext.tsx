@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { clearAuth, getAuthUser, saveAuth } from './authStorage';
-import { login as loginApi } from './authApi';
-import { AuthUser, LoginRequest, Permission, UserRole } from './authTypes';
+import { login as loginApi, register as registerApi } from './authApi';
+import { AuthUser, LoginRequest, Permission, RegisterRequest, UserRole } from './authTypes';
 
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  login: (request: LoginRequest) => Promise<void>;
+  login: (request: LoginRequest) => Promise<AuthUser>;
+  register: (request: RegisterRequest) => Promise<AuthUser>;
   logout: () => void;
   hasRole: (roles: UserRole[]) => boolean;
   hasPermission: (permission: Permission) => boolean;
@@ -27,6 +28,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const response = await loginApi(request);
         saveAuth(response.accessToken, response.user, response.refreshToken);
         setUser(response.user);
+        return response.user;
+      },
+
+      register: async (request: RegisterRequest) => {
+        const response = await registerApi(request);
+        saveAuth(response.accessToken, response.user, response.refreshToken);
+        setUser(response.user);
+        return response.user;
       },
 
       logout: () => {

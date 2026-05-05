@@ -38,6 +38,18 @@ export default function AdminLayout() {
                 >
                   Categories
                 </NavLink>
+                <NavLink
+                  to="/admin/orders"
+                  className={({ isActive }) => isActive ? 'admin-tab admin-tab-active' : 'admin-tab'}
+                >
+                  Orders
+                </NavLink>
+                <NavLink
+                  to="/admin/audit-logs"
+                  className={({ isActive }) => isActive ? 'admin-tab admin-tab-active' : 'admin-tab'}
+                >
+                  Audit Logs
+                </NavLink>
               </Stack>
             </Paper>
           </Stack>

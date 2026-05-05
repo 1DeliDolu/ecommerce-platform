@@ -16,6 +16,8 @@ import com.pehlione.ecommerce.dto.RefreshTokenRequest;
 import com.pehlione.ecommerce.dto.RegisterRequest;
 import com.pehlione.ecommerce.domain.AppUser;
 import com.pehlione.ecommerce.dto.auth.AuthUserResponse;
+import com.pehlione.ecommerce.event.KafkaEventPublisher;
+import com.pehlione.ecommerce.event.KafkaTopics;
 import com.pehlione.ecommerce.repository.AppUserRepository;
 import com.pehlione.ecommerce.security.JwtService;
 import com.pehlione.ecommerce.security.LoginAttemptAuditService;
@@ -23,6 +25,7 @@ import com.pehlione.ecommerce.security.RefreshTokenService;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,17 +37,21 @@ public class AuthController {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final LoginAttemptAuditService loginAttemptAuditService;
+    private final KafkaEventPublisher kafkaEventPublisher;
     private final Counter loginSuccessCounter;
     private final Counter loginFailureCounter;
 
     public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder,
                           JwtService jwtService, RefreshTokenService refreshTokenService,
-                          LoginAttemptAuditService loginAttemptAuditService, MeterRegistry meterRegistry) {
+                          LoginAttemptAuditService loginAttemptAuditService,
+                          KafkaEventPublisher kafkaEventPublisher,
+                          MeterRegistry meterRegistry) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.loginAttemptAuditService = loginAttemptAuditService;
+        this.kafkaEventPublisher = kafkaEventPublisher;
         this.loginSuccessCounter = Counter.builder("ecommerce.auth.login")
                 .tag("result", "success")
                 .description("Successful logins")
@@ -98,6 +105,15 @@ public class AuthController {
         List<String> permissions = parsePermissions(saved.getPermissions());
         String token = jwtService.createToken(saved.getEmail(), saved.getFullName(), saved.getRole(), permissions);
         String refreshToken = refreshTokenService.rotateForUser(saved);
+        kafkaEventPublisher.publish(
+                KafkaTopics.USER_REGISTERED,
+                "auth-service",
+                Map.of(
+                        "userId", saved.getId(),
+                        "email", saved.getEmail(),
+                        "role", saved.getRole()
+                )
+        );
 
         return new LoginResponse(token, refreshToken, toUserResponse(saved, permissions));
     }

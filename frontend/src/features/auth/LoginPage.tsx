@@ -30,8 +30,8 @@ export default function LoginPage() {
     setError(null);
     try {
       setSubmitting(true);
-      await auth.login({ email, password });
-      navigate(auth.hasAnyPermission(['ADMIN_PANEL_ACCESS']) ? '/admin/products' : '/');
+      const user = await auth.login({ email, password });
+      navigate(user.permissions.includes('ADMIN_PANEL_ACCESS') ? '/admin/products' : '/products');
     } catch (err: any) {
       setError(err.message || 'Login failed.');
     } finally {
