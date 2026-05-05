@@ -6,7 +6,7 @@
       CVE-2018-1258 applies to Spring Framework 5.0.5 used with method security.
       This project uses Spring Framework 7.x via Spring Boot 4.x.
     ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring-security-core@7\..*$</packageUrl>
+    <filePath regex="true">.*spring-security-[^/]+-7\.0\.5\.jar$</filePath>
     <cve>CVE-2018-1258</cve>
   </suppress>
 </suppressions>
