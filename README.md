@@ -168,7 +168,7 @@ This project demonstrates a modern backend architecture with secure authenticati
 ### Run Locally
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/1DeliDolu/ecommerce-platform.git
 cd ecommerce-platform
 
 chmod +x scripts/*.sh
