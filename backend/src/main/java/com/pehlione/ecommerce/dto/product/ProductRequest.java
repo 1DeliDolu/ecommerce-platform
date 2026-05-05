@@ -1,16 +1,36 @@
 package com.pehlione.ecommerce.dto.product;
 
 import com.pehlione.ecommerce.domain.Product;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 public class ProductRequest {
 
+    @NotNull
     private Long categoryId;
+
+    @NotBlank
+    @Size(max = 160)
     private String name;
+
+    @NotBlank
+    @Size(max = 180)
     private String slug;
+
+    @Size(max = 2000)
     private String description;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
     private BigDecimal price;
+
+    @Min(0)
     private int stockQuantity;
+
     private Product.ProductStatus status;
 
     public Long getCategoryId() {

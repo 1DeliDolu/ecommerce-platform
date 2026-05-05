@@ -1,7 +1,15 @@
 package com.pehlione.ecommerce.dto.customer;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+
 public class CheckoutRequest {
+    @Valid
+    @NotNull
     private ShippingAddressRequest shippingAddress;
+
+    @Valid
+    @NotNull
     private PaymentRequest payment;
 
     public ShippingAddressRequest getShippingAddress() { return shippingAddress; }

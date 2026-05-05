@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       login: async (request: LoginRequest) => {
         const response = await loginApi(request);
-        saveAuth(response.accessToken, response.user);
+        saveAuth(response.accessToken, response.user, response.refreshToken);
         setUser(response.user);
       },
 

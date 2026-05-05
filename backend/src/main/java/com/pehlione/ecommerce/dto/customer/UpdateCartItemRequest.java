@@ -1,6 +1,9 @@
 package com.pehlione.ecommerce.dto.customer;
 
+import jakarta.validation.constraints.Min;
+
 public class UpdateCartItemRequest {
+    @Min(0)
     private int quantity;
 
     public int getQuantity() { return quantity; }

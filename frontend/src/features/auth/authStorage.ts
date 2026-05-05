@@ -1,10 +1,14 @@
 import { AuthUser, Permission, UserRole } from './authTypes';
 
 const ACCESS_TOKEN_KEY = 'accessToken';
+const REFRESH_TOKEN_KEY = 'refreshToken';
 const AUTH_USER_KEY = 'authUser';
 
-export function saveAuth(accessToken: string, user: AuthUser): void {
+export function saveAuth(accessToken: string, user: AuthUser, refreshToken?: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  if (refreshToken) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
   localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
 }
 
@@ -25,6 +29,7 @@ export function getAuthUser(): AuthUser | null {
 
 export function clearAuth(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(AUTH_USER_KEY);
 }
 

@@ -8,6 +8,8 @@ import com.pehlione.ecommerce.domain.AppUser;
 import com.pehlione.ecommerce.dto.LoginRequest;
 import com.pehlione.ecommerce.repository.AppUserRepository;
 import com.pehlione.ecommerce.security.JwtService;
+import com.pehlione.ecommerce.security.LoginAttemptAuditService;
+import com.pehlione.ecommerce.security.RefreshTokenService;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.lang.reflect.Proxy;
@@ -16,6 +18,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AuthControllerTest {
     private final JwtService jwtService = new JwtService("01234567890123456789012345678901", 30);
@@ -35,12 +40,15 @@ class AuthControllerTest {
                 repositoryWithUsers(Map.of("admin@example.com", user)),
                 plainTextPasswordEncoder(),
                 jwtService,
+                refreshTokenService(),
+                loginAttemptAuditService(),
                 meterRegistry
         );
 
         var response = authController.login(new LoginRequest("admin@example.com", "admin123"));
 
         assertThat(response.accessToken()).isNotBlank();
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
         assertThat(response.user().role()).isEqualTo("ADMIN");
         assertThat(response.user().email()).isEqualTo("admin@example.com");
         assertThat(response.user().permissions()).contains("ADMIN_PANEL_ACCESS", "PRODUCT_READ");
@@ -60,6 +68,8 @@ class AuthControllerTest {
                 repositoryWithUsers(Map.of("admin@example.com", user)),
                 plainTextPasswordEncoder(),
                 jwtService,
+                refreshTokenService(),
+                loginAttemptAuditService(),
                 meterRegistry
         );
 
@@ -94,5 +104,15 @@ class AuthControllerTest {
                 return rawPassword.toString().equals(encodedPassword);
             }
         };
+    }
+
+    private RefreshTokenService refreshTokenService() {
+        RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
+        when(refreshTokenService.rotateForUser(any(AppUser.class))).thenReturn("refresh-token");
+        return refreshTokenService;
+    }
+
+    private LoginAttemptAuditService loginAttemptAuditService() {
+        return mock(LoginAttemptAuditService.class);
     }
 }

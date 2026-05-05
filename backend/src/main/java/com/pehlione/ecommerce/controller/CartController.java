@@ -2,6 +2,8 @@ package com.pehlione.ecommerce.controller;
 
 import com.pehlione.ecommerce.dto.customer.*;
 import com.pehlione.ecommerce.service.CartService;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,30 +18,29 @@ public class CartController {
     }
 
     @GetMapping
-    public CartResponse getCart(
-            @RequestHeader(value = "X-User-Email", defaultValue = "customer@example.com") String userEmail) {
-        return cartService.getCart(userEmail);
+    public CartResponse getCart(Authentication authentication) {
+        return cartService.getCart(authentication.getName());
     }
 
     @PostMapping("/items")
     public CartResponse addItem(
-            @RequestHeader(value = "X-User-Email", defaultValue = "customer@example.com") String userEmail,
-            @RequestBody AddCartItemRequest request) {
-        return cartService.addItem(userEmail, request);
+            Authentication authentication,
+            @Valid @RequestBody AddCartItemRequest request) {
+        return cartService.addItem(authentication.getName(), request);
     }
 
     @PatchMapping("/items/{productId}")
     public CartResponse updateItem(
-            @RequestHeader(value = "X-User-Email", defaultValue = "customer@example.com") String userEmail,
+            Authentication authentication,
             @PathVariable Long productId,
-            @RequestBody UpdateCartItemRequest request) {
-        return cartService.updateItem(userEmail, productId, request);
+            @Valid @RequestBody UpdateCartItemRequest request) {
+        return cartService.updateItem(authentication.getName(), productId, request);
     }
 
     @DeleteMapping("/items/{productId}")
     public CartResponse removeItem(
-            @RequestHeader(value = "X-User-Email", defaultValue = "customer@example.com") String userEmail,
+            Authentication authentication,
             @PathVariable Long productId) {
-        return cartService.removeItem(userEmail, productId);
+        return cartService.removeItem(authentication.getName(), productId);
     }
 }

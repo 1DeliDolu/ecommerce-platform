@@ -2,6 +2,8 @@ package com.pehlione.ecommerce.controller;
 
 import com.pehlione.ecommerce.dto.customer.*;
 import com.pehlione.ecommerce.service.CheckoutService;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,14 +21,13 @@ public class CheckoutController {
 
     @PostMapping("/checkout")
     public OrderResponse checkout(
-            @RequestHeader(value = "X-User-Email", defaultValue = "customer@example.com") String userEmail,
-            @RequestBody CheckoutRequest request) {
-        return checkoutService.checkout(userEmail, request);
+            Authentication authentication,
+            @Valid @RequestBody CheckoutRequest request) {
+        return checkoutService.checkout(authentication.getName(), request);
     }
 
     @GetMapping("/my")
-    public List<OrderResponse> myOrders(
-            @RequestHeader(value = "X-User-Email", defaultValue = "customer@example.com") String userEmail) {
-        return checkoutService.findMyOrders(userEmail);
+    public List<OrderResponse> myOrders(Authentication authentication) {
+        return checkoutService.findMyOrders(authentication.getName());
     }
 }

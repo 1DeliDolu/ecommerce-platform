@@ -8,6 +8,7 @@ import com.pehlione.ecommerce.dto.product.ProductResponse;
 import com.pehlione.ecommerce.dto.product.ProductSearchParams;
 import com.pehlione.ecommerce.service.ProductImageService;
 import com.pehlione.ecommerce.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -67,14 +68,14 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductResponse create(@RequestBody ProductRequest request) {
+    public ProductResponse create(@Valid @RequestBody ProductRequest request) {
         return productService.create(request);
     }
 
     @PutMapping("/{id}")
     public ProductResponse update(
             @PathVariable Long id,
-            @RequestBody ProductRequest request
+            @Valid @RequestBody ProductRequest request
     ) {
         return productService.update(id, request);
     }

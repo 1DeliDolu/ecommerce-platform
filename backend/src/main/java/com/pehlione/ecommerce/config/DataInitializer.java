@@ -53,7 +53,7 @@ public class DataInitializer implements ApplicationRunner {
                 existing.setPermissions(permissions);
                 AppUser saved = appUserRepository.save(existing);
                 syncRoleRelation(saved, role);
-                log.info("User refreshed: {}", email);
+                log.info("User refreshed: {}", maskEmail(email));
             },
             () -> {
                 AppUser user = new AppUser();
@@ -65,7 +65,7 @@ public class DataInitializer implements ApplicationRunner {
                 user.setEnabled(true);
                 AppUser saved = appUserRepository.save(user);
                 syncRoleRelation(saved, role);
-                log.info("User created: {} ({})", email, role);
+                log.info("User created: {} ({})", maskEmail(email), role);
             }
         );
     }
@@ -79,5 +79,16 @@ public class DataInitializer implements ApplicationRunner {
                 user.getId(),
                 role
         );
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "";
+        }
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 1) {
+            return "***" + email.substring(Math.max(atIndex, 0));
+        }
+        return email.charAt(0) + "***" + email.substring(atIndex);
     }
 }
