@@ -69,6 +69,17 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        if (loginAttemptAuditService.isLockedOut(request.email())) {
+            auditService.record(
+                    AuditAction.ACCOUNT_LOCKED_OUT,
+                    "auth",
+                    maskEmail(request.email()),
+                    "reason=too_many_failed_attempts"
+            );
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Account temporarily locked due to too many failed attempts");
+        }
+
         var userOpt = appUserRepository.findByEmailIgnoreCase(request.email())
                 .filter(candidate -> candidate.isEnabled()
                         && passwordEncoder.matches(request.password(), candidate.getPasswordHash()));

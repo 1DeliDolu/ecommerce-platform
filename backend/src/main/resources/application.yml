@@ -69,7 +69,12 @@ management:
 
 security:
   jwt:
+    # Symmetric HMAC-SHA256: set JWT_SECRET (at least 32 bytes)
     secret: ${JWT_SECRET:}
+    # Asymmetric RS256: set both JWT_PRIVATE_KEY and JWT_PUBLIC_KEY (base64-encoded PKCS8/X509)
+    # When both are present, RS256 is used and JWT_SECRET is ignored.
+    private-key: ${JWT_PRIVATE_KEY:}
+    public-key: ${JWT_PUBLIC_KEY:}
     expiration-minutes: 30
 
 app:

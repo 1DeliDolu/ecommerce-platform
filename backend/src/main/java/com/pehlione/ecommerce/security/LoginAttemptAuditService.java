@@ -11,6 +11,9 @@ import java.util.Map;
 
 @Service
 public class LoginAttemptAuditService {
+    static final int MAX_FAILED_ATTEMPTS = 5;
+    static final int LOCKOUT_WINDOW_MINUTES = 15;
+
     private final JdbcTemplate jdbcTemplate;
     private final KafkaEventPublisher kafkaEventPublisher;
     private final AuditService auditService;
@@ -19,6 +22,22 @@ public class LoginAttemptAuditService {
         this.jdbcTemplate = jdbcTemplate;
         this.kafkaEventPublisher = kafkaEventPublisher;
         this.auditService = auditService;
+    }
+
+    /**
+     * Returns true if the given email has exceeded the failed-attempt threshold within the lockout window.
+     * This provides brute-force / account-lockout protection without requiring a schema change.
+     */
+    public boolean isLockedOut(String email) {
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        Integer failedCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM login_attempts WHERE email = ? AND success = false " +
+                "AND created_at > NOW() - (? * INTERVAL '1 minute')",
+                Integer.class,
+                normalizedEmail,
+                LOCKOUT_WINDOW_MINUTES
+        );
+        return failedCount != null && failedCount >= MAX_FAILED_ATTEMPTS;
     }
 
     public void record(String email, boolean success, String failureCode) {

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AuthControllerTest {
-    private final JwtService jwtService = new JwtService("01234567890123456789012345678901", 30);
+    private final JwtService jwtService = new JwtService("01234567890123456789012345678901", "", "", 30);
     private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @Test
