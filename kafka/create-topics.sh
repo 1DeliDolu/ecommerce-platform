@@ -2,6 +2,12 @@
 set -euo pipefail
 
 BOOTSTRAP_SERVER="${KAFKA_BOOTSTRAP_SERVER:-kafka:9092}"
+KAFKA_TOPICS="${KAFKA_TOPICS_CMD:-/opt/kafka/bin/kafka-topics.sh}"
+
+# fallback to PATH if the binary isn't at the expected location
+if ! command -v "$KAFKA_TOPICS" >/dev/null 2>&1 && command -v kafka-topics.sh >/dev/null 2>&1; then
+  KAFKA_TOPICS="kafka-topics.sh"
+fi
 
 topics=(
   "user.registered"
@@ -13,7 +19,7 @@ topics=(
 )
 
 for topic in "${topics[@]}"; do
-  kafka-topics.sh \
+  "$KAFKA_TOPICS" \
     --bootstrap-server "${BOOTSTRAP_SERVER}" \
     --create \
     --if-not-exists \
@@ -22,4 +28,4 @@ for topic in "${topics[@]}"; do
     --replication-factor 1
 done
 
-kafka-topics.sh --bootstrap-server "${BOOTSTRAP_SERVER}" --list
+"$KAFKA_TOPICS" --bootstrap-server "${BOOTSTRAP_SERVER}" --list
