@@ -43,45 +43,45 @@ The project is designed to be runnable on a developer laptop with a single comma
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│  Docker Compose                                                               │
-│                                                                               │
+│  Docker Compose                                                              │
+│                                                                              │
 │  ┌──────────┐   REST    ┌────────────────────────────────────────────────┐   │
-│  │ React    │ ◀───────▶ │  Spring Boot Backend (Java 25)                 │   │
-│  │ Frontend │           │                                                 │   │
+│  │ React    │ ◀─────▶  │  Spring Boot Backend (Java 25)                 │   │
+│  │ Frontend │           │                                                │   │
 │  │ (nginx)  │           │  Controllers → Services → JPA Repositories     │   │
-│  └──────────┘           │                                                 │   │
+│  └──────────┘           │                                                │   │
 │                         │  ┌─────────────────────────────────────────┐   │   │
-│                         │  │  Spring Security                         │   │   │
-│                         │  │  JWT RS256 • RBAC • Rate Limiting        │   │   │
-│                         │  │  Account Lockout • Security Headers      │   │   │
+│                         │  │  Spring Security                        │   │   │
+│                         │  │  JWT RS256 • RBAC • Rate Limiting       │   │   │
+│                         │  │  Account Lockout • Security Headers     │   │   │
 │                         │  └─────────────────────────────────────────┘   │   │
 │                         └───────────────┬────────────┬───────────────────┘   │
-│                                         │            │                        │
-│                          ┌──────────────▼───┐  ┌─────▼──────────┐           │
+│                                         │            │                       │
+│                          ┌──────────────▼───┐  ┌─────▼──────────┐            │
 │                          │  PostgreSQL 17    │  │  Kafka (KRaft) │           │
 │                          │  (TLS 1.2+)       │  │  6 topics      │           │
-│                          │  Flyway V001–V010  │  └─────┬──────────┘           │
-│                          └──────────────────┘        │                        │
-│                                                       │ async events           │
+│                          │  Flyway V001–V010 │  └─────┬──────────┘           │
+│                          └──────────────────┘        │                       │
+│                                                       │ async events         │
 │                          ┌────────────────┐    ┌──────▼──────────┐           │
-│                          │  RabbitMQ      │    │  Email Worker    │           │
-│                          │  mail.send     │◀───│  (Spring AMQP)   │           │
+│                          │  RabbitMQ      │    │  Email Worker   │           │
+│                          │  mail.send     │◀──│  (Spring AMQP)  │           │
 │                          │  mail.send.dlq │    └─────────────────┘           │
-│                          └───────┬────────┘                                   │
-│                                  │                                             │
-│                          ┌───────▼────────┐                                   │
-│                          │  MailHog       │                                   │
-│                          │  (SMTP sink)   │                                   │
-│                          └────────────────┘                                   │
-│                                                                               │
+│                          └───────┬────────┘                                  │
+│                                  │                                           │
+│                          ┌───────▼────────┐                                  │
+│                          │  MailHog       │                                  │
+│                          │  (SMTP sink)   │                                  │
+│                          └────────────────┘                                  │
+│                                                                              │
 │  ┌──────────────────────────────────────────────────────────────┐            │
-│  │  Monitoring (--profile monitoring)                            │            │
+│  │  Monitoring (--profile monitoring)                           │            │
 │  │  Prometheus ← backend + postgres-exporter + kafka-exporter   │            │
 │  │              + rabbitmq-exporter → Grafana                   │            │
 │  └──────────────────────────────────────────────────────────────┘            │
-│                                                                               │
+│                                                                              │
 │  ┌────────────────────────────────────────────────────────────┐              │
-│  │  ETL (--profile etl)                                        │              │
+│  │  ETL (--profile etl)                                       │              │
 │  │  Airflow 2.10 → 5 daily DAGs → staging → dw → reports      │              │
 │  └────────────────────────────────────────────────────────────┘              │
 └──────────────────────────────────────────────────────────────────────────────┘
