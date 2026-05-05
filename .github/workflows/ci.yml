@@ -47,6 +47,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Prepare Compose Secrets
+        run: |
+          mkdir -p secrets
+          printf '%s' 'ci-postgres-password' > secrets/postgres_password.txt
+          printf '%s' 'ci-private-key-placeholder' > secrets/jwt_private_key.pem
+          printf '%s' 'ci-public-key-placeholder' > secrets/jwt_public_key.pem
       - name: Validate Compose
         run: docker compose config >/dev/null
 
@@ -76,10 +82,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Prepare Compose Secrets
+        run: |
+          mkdir -p secrets
+          printf '%s' 'ci-postgres-password' > secrets/postgres_password.txt
+          printf '%s' 'ci-private-key-placeholder' > secrets/jwt_private_key.pem
+          printf '%s' 'ci-public-key-placeholder' > secrets/jwt_public_key.pem
       - name: Build Image
         run: docker compose build ${{ matrix.service }}
       - name: Scan Image
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ${{ matrix.image }}
           severity: HIGH,CRITICAL

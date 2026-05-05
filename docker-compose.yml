@@ -12,9 +12,11 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-}
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-ecommerce_user}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}
-    AIRFLOW_CONN_ECOMMERCE_POSTGRES: postgresql://${POSTGRES_USER:-ecommerce_user}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN_CMD: >-
+      python -c 'from pathlib import Path; from urllib.parse import quote; import sys; sys.stdout.write("postgresql+psycopg2://${POSTGRES_USER:-ecommerce_user}:{}@postgres:5432/${POSTGRES_DB:-ecommerce}".format(quote(Path("/run/secrets/postgres_password").read_text().strip(), safe="")))'
     _PIP_ADDITIONAL_REQUIREMENTS: ${AIRFLOW_PIP_ADDITIONAL_REQUIREMENTS:-apache-airflow-providers-postgres==5.13.1}
+  secrets:
+    - postgres_password
   volumes:
     - ./airflow/dags:/opt/airflow/dags:ro
     - airflow_logs:/opt/airflow/logs
@@ -416,7 +418,16 @@ services:
     command:
       - -c
       - |
+        POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)"
         airflow db migrate
+        airflow connections delete ecommerce_postgres >/dev/null 2>&1 || true
+        airflow connections add ecommerce_postgres \
+          --conn-type postgres \
+          --conn-host postgres \
+          --conn-login "${POSTGRES_USER:-ecommerce_user}" \
+          --conn-password "$${POSTGRES_PASSWORD}" \
+          --conn-schema "${POSTGRES_DB:-ecommerce}" \
+          --conn-port 5432
         airflow users create \
           --username "$${AIRFLOW_ADMIN_USER:-admin}" \
           --password "$${AIRFLOW_ADMIN_PASSWORD:-admin}" \
