@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <suppress>
+    <notes><![CDATA[
+      False positive from the generic Spring Security CPE match.
+      CVE-2018-1258 applies to Spring Framework 5.0.5 used with method security.
+      This project uses Spring Framework 7.x via Spring Boot 4.x.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring-security-core@7\..*$</packageUrl>
+    <cve>CVE-2018-1258</cve>
+  </suppress>
+</suppressions>

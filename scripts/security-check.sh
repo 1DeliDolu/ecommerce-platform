@@ -79,6 +79,7 @@ if command -v docker >/dev/null 2>&1; then
   mkdir -p "$DEP_CHECK_DATA_DIR" "$DEP_CHECK_REPORT_DIR"
   docker run --rm \
     -v "$ROOT_DIR/backend:/src:ro" \
+    -v "$ROOT_DIR/security/dependency-check-suppressions.xml:/dependency-check-suppressions.xml:ro" \
     -v "$DEP_CHECK_DATA_DIR:/usr/share/dependency-check/data" \
     -v "$DEP_CHECK_REPORT_DIR:/report" \
     owasp/dependency-check:latest \
@@ -87,6 +88,7 @@ if command -v docker >/dev/null 2>&1; then
     --format HTML \
     --format JSON \
     --failOnCVSS 8 \
+    --suppression /dependency-check-suppressions.xml \
     --out /report && ok "Dependency scan passed (CVSS < 8)" \
     || fail "Dependency scan found HIGH/CRITICAL CVEs — check $DEP_CHECK_REPORT_DIR"
 else
