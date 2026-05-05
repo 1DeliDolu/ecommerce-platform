@@ -27,6 +27,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final String[] RATE_LIMITED_PREFIXES = {
             "/api/auth/login", "/api/auth/register", "/api/auth/refresh"
     };
+    private static final long ONE_SECOND_IN_NANOS = TimeUnit.SECONDS.toNanos(1);
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
     private final int requestsPerMinute;
@@ -34,6 +35,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     public RateLimitingFilter(
             @Value("${app.security.rate-limit.auth-requests-per-minute:20}") int requestsPerMinute
     ) {
+        if (requestsPerMinute <= 0) {
+            throw new IllegalArgumentException("app.security.rate-limit.auth-requests-per-minute must be greater than 0");
+        }
         this.requestsPerMinute = requestsPerMinute;
     }
 
@@ -41,13 +45,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String path = request.getRequestURI();
-        boolean isRateLimited = false;
-        for (String prefix : RATE_LIMITED_PREFIXES) {
-            if (path.startsWith(prefix)) {
-                isRateLimited = true;
-                break;
-            }
-        }
+        boolean isRateLimited = isRateLimitedPath(path);
 
         if (!isRateLimited) {
             filterChain.doFilter(request, response);
@@ -62,12 +60,31 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             response.setHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
             filterChain.doFilter(request, response);
         } else {
-            long retryAfterSeconds = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
+            long retryAfterSeconds = toRetryAfterSeconds(probe.getNanosToWaitForRefill());
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("X-Rate-Limit-Remaining", "0");
             response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
             response.getWriter().write("{\"error\":\"Too many requests. Try again in " + retryAfterSeconds + " seconds.\"}");
         }
+    }
+
+    private boolean isRateLimitedPath(String path) {
+        for (String prefix : RATE_LIMITED_PREFIXES) {
+            if (path.equals(prefix) || path.startsWith(prefix + "/")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private long toRetryAfterSeconds(long nanosToWaitForRefill) {
+        if (nanosToWaitForRefill <= 0) {
+            return 1;
+        }
+        long roundedUpSeconds = (nanosToWaitForRefill + ONE_SECOND_IN_NANOS - 1) / ONE_SECOND_IN_NANOS;
+        return Math.max(1, roundedUpSeconds);
     }
 
     private Bucket createBucket() {
@@ -82,12 +99,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private String resolveClientKey(HttpServletRequest request) {
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
+            String forwarded = xff.split(",")[0].trim();
+            if (!forwarded.isBlank()) {
+                return forwarded;
+            }
         }
         String xri = request.getHeader("X-Real-IP");
         if (xri != null && !xri.isBlank()) {
             return xri.trim();
         }
-        return request.getRemoteAddr();
+        String remoteAddr = request.getRemoteAddr();
+        return (remoteAddr == null || remoteAddr.isBlank()) ? "unknown-client" : remoteAddr;
     }
 }

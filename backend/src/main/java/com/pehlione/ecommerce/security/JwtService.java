@@ -3,6 +3,7 @@ package com.pehlione.ecommerce.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ public class JwtService {
     private final RSAPublicKey verificationKey;
     private final long expirationMinutes;
 
+    @Autowired
     public JwtService(
             @Value("${security.jwt.private-key-path}") String privateKeyPath,
             @Value("${security.jwt.public-key-path}") String publicKeyPath,

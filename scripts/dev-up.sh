@@ -33,10 +33,15 @@ if [ ! -f secrets/jwt_private_key.pem ] || [ ! -f secrets/jwt_public_key.pem ]; 
   openssl pkcs8 -topk8 -nocrypt -in /tmp/jwt_rsa_tmp.pem -out secrets/jwt_private_key.pem
   openssl rsa -in /tmp/jwt_rsa_tmp.pem -pubout -out secrets/jwt_public_key.pem 2>/dev/null
   rm -f /tmp/jwt_rsa_tmp.pem
-  chmod 600 secrets/jwt_private_key.pem
+  chmod 644 secrets/jwt_private_key.pem
   chmod 644 secrets/jwt_public_key.pem
   echo "JWT RSA keypair secrets/ klasörüne oluşturuldu."
 fi
+
+# Local Docker Compose "file secret" mountlarında kaynak dosya modu korunur.
+# Backend containerındaki "app" kullanıcısının private key'i okuyabilmesi için
+# key dosyalarını okunabilir modda tutuyoruz.
+chmod 644 secrets/jwt_private_key.pem secrets/jwt_public_key.pem
 
 docker compose up --build -d
 

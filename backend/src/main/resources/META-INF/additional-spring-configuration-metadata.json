@@ -1,0 +1,44 @@
+{
+  "properties": [
+    {
+      "name": "security.jwt.private-key-path",
+      "type": "java.lang.String",
+      "description": "Path to the RSA private key PEM file used for JWT signing."
+    },
+    {
+      "name": "security.jwt.public-key-path",
+      "type": "java.lang.String",
+      "description": "Path to the RSA public key PEM file used for JWT verification."
+    },
+    {
+      "name": "security.jwt.expiration-minutes",
+      "type": "java.lang.Long",
+      "description": "JWT token expiration time in minutes.",
+      "defaultValue": 30
+    },
+    {
+      "name": "app.cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "Comma-separated list of allowed CORS origins.",
+      "defaultValue": "http://localhost:3000"
+    },
+    {
+      "name": "app.mail.from",
+      "type": "java.lang.String",
+      "description": "Default sender address for outgoing application emails.",
+      "defaultValue": "no-reply@enterprise-shop.local"
+    },
+    {
+      "name": "app.mail.admin-to",
+      "type": "java.lang.String",
+      "description": "Recipient address for admin notification emails.",
+      "defaultValue": "admin@example.com"
+    },
+    {
+      "name": "app.security.rate-limit.auth-requests-per-minute",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of authentication requests allowed per minute per IP.",
+      "defaultValue": 20
+    }
+  ]
+}

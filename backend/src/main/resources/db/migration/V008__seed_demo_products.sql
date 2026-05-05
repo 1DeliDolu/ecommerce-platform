@@ -1,5 +1,5 @@
-INSERT INTO products (category_id, name, slug, description, price, stock_quantity, status)
-SELECT c.id, v.name, v.slug, v.description, v.price, v.stock_quantity, 'ACTIVE'
+INSERT INTO products (category_id, name, slug, description, price, stock_quantity, status, created_at)
+SELECT c.id, v.name, v.slug, v.description, v.price, v.stock_quantity, 'ACTIVE', NOW()
 FROM (
     VALUES
         ('electronics', 'Developer Laptop Pro 14', 'developer-laptop-pro-14', 'Portable workstation for Java and frontend development.', 64999.90, 12),

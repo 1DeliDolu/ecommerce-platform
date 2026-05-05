@@ -12,6 +12,7 @@ import com.pehlione.ecommerce.event.KafkaEventPublisher;
 import com.pehlione.ecommerce.repository.AppUserRepository;
 import com.pehlione.ecommerce.security.AccountLockoutService;
 import com.pehlione.ecommerce.security.JwtService;
+import com.pehlione.ecommerce.security.JwtServiceTestFactory;
 import com.pehlione.ecommerce.security.LoginAttemptAuditService;
 import com.pehlione.ecommerce.security.RefreshTokenService;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -40,7 +41,7 @@ class AuthControllerTest {
         KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
         gen.initialize(2048);
         KeyPair kp = gen.generateKeyPair();
-        jwtService = new JwtService((RSAPrivateKey) kp.getPrivate(), (RSAPublicKey) kp.getPublic(), 30);
+        jwtService = JwtServiceTestFactory.create((RSAPrivateKey) kp.getPrivate(), (RSAPublicKey) kp.getPublic(), 30L);
     }
 
     @Test

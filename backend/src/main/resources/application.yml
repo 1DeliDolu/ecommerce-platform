@@ -16,13 +16,13 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        format_sql: true
+        "[format_sql]": true
         jdbc:
-          time_zone: UTC
+          "[time_zone]": UTC
 
   flyway:
     enabled: true
-    baseline-on-migrate: false
+    baseline-on-migrate: true
 
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -33,7 +33,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: com.pehlione.ecommerce.event
+        "[spring.json.trusted.packages]": com.pehlione.ecommerce.event
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
