@@ -237,11 +237,11 @@ docker compose down -v
 | Backend Health | http://localhost:8080/actuator/health | — |
 | MailHog | http://localhost:8025 | — |
 | Kafka UI | http://localhost:8085 | — |
-| RabbitMQ UI | http://localhost:15672 | `guest / guest` |
+| RabbitMQ UI | http://localhost:15672 | `ecommerce / ecommerce` |
 | Prometheus | http://localhost:9090 | — |
 | Grafana | http://localhost:3001 | `admin / admin` |
 | pgAdmin | http://localhost:5050 | `admin@local.dev / admin123` |
-| Airflow | http://localhost:8088 | `admin / admin` |
+| Airflow | http://localhost:8088 | `admin / admin` (requires `etl` profile) |
 
 ---
 
@@ -633,6 +633,11 @@ Passwords must contain:
 | Environment values | `.env` |
 | Git protection | `.gitignore` excludes secrets and `.env` |
 
+Local development note:
+- Docker Compose file-based secrets preserve source file mode.
+- JWT key files are kept readable locally for container compatibility.
+- In production, use least-privilege permissions and a dedicated secrets manager.
+
 ### Audit & Logging
 
 | Control | Status |
@@ -758,7 +763,7 @@ Suggested screenshots:
 | Full documentation | ✅ Done |
 | Redis-backed token blocklist | Planned |
 | CAPTCHA or progressive login delay | Planned |
-| GitHub Actions CI pipeline | Planned |
+| GitHub Actions CI pipeline | ✅ Done |
 | OWASP ZAP / SonarQube integration | Planned |
 | HTTPS termination with nginx or Traefik | Planned |
 | Kubernetes / Helm deployment | Future |

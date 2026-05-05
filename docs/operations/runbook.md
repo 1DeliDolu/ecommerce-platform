@@ -27,7 +27,7 @@ The script handles all initialization automatically:
 
 1. Copies `.env.example` → `.env` if `.env` is absent
 2. Generates `secrets/postgres_password.txt` (random 48-byte base64, mode 644)
-3. Generates `secrets/jwt_private_key.pem` (RSA 2048, PKCS8, mode 600)
+3. Generates `secrets/jwt_private_key.pem` (RSA 2048, PKCS8, mode 644 in local dev)
 4. Generates `secrets/jwt_public_key.pem` (mode 644)
 5. Runs `docker compose up --build -d`
 
@@ -43,7 +43,7 @@ After the script completes, wait ~30 seconds for the backend to apply Flyway mig
 docker compose up -d
 ```
 
-Services started: `postgres`, `backend`, `frontend`, `mailhog`, `kafka`, `kafka-init`, `kafka-ui`, `rabbitmq`, `airflow-init`, `airflow-webserver`, `airflow-scheduler`
+Services started: `postgres`, `backend`, `frontend`, `mailhog`, `kafka`, `kafka-init`, `kafka-ui`, `rabbitmq`
 
 ### With monitoring
 
@@ -52,6 +52,14 @@ docker compose --profile monitoring up -d
 ```
 
 Additional services: `prometheus`, `grafana`, `postgres-exporter`, `kafka-exporter`, `rabbitmq-exporter`
+
+### With ETL services
+
+```bash
+docker compose --profile etl up -d
+```
+
+Additional services: `airflow-init`, `airflow-webserver`, `airflow-scheduler`
 
 ### With database tooling
 
@@ -64,7 +72,7 @@ Additional service: `pgadmin`
 ### All profiles combined
 
 ```bash
-docker compose --profile monitoring --profile tools up -d
+docker compose --profile monitoring --profile etl --profile tools up -d
 ```
 
 ---
@@ -245,11 +253,11 @@ Key variables in `.env` (never commit this file):
 | Swagger UI     | http://localhost:8080/swagger-ui.html | —                          |
 | MailHog UI     | http://localhost:8025                 | —                          |
 | Kafka UI       | http://localhost:8085                 | —                          |
-| RabbitMQ UI    | http://localhost:15672                | guest / guest (or env)     |
+| RabbitMQ UI    | http://localhost:15672                | ecommerce / ecommerce (or env) |
 | Prometheus     | http://localhost:9090                 | —                          |
 | Grafana        | http://localhost:3001                 | admin / admin              |
 | pgAdmin        | http://localhost:5050                 | admin@local.dev / admin123 |
-| Airflow        | http://localhost:8088                 | admin / admin              |
+| Airflow        | http://localhost:8088                 | admin / admin (requires `etl` profile) |
 
 ---
 
@@ -258,7 +266,7 @@ Key variables in `.env` (never commit this file):
 ```
 secrets/
 ├── postgres_password.txt     — PostgreSQL user password (mode 644)
-├── jwt_private_key.pem       — RSA private key for JWT signing (mode 600)
+├── jwt_private_key.pem       — RSA private key for JWT signing (mode 644 in local dev)
 └── jwt_public_key.pem        — RSA public key for JWT verification (mode 644)
 ```
 

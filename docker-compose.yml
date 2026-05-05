@@ -411,6 +411,7 @@ services:
     <<: *airflow-common
     container_name: ecommerce-airflow-init
     restart: "no"
+    profiles: ["etl"]
     entrypoint: /bin/bash
     command:
       - -c
@@ -432,6 +433,7 @@ services:
     <<: *airflow-common
     container_name: ecommerce-airflow-webserver
     restart: unless-stopped
+    profiles: ["etl"]
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -449,6 +451,7 @@ services:
     <<: *airflow-common
     container_name: ecommerce-airflow-scheduler
     restart: unless-stopped
+    profiles: ["etl"]
     depends_on:
       airflow-init:
         condition: service_completed_successfully
