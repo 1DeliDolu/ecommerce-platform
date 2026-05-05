@@ -2,6 +2,7 @@ package com.pehlione.ecommerce.controller;
 
 import com.pehlione.ecommerce.audit.AuditAction;
 import com.pehlione.ecommerce.audit.AuditService;
+import com.pehlione.ecommerce.security.AccountLockoutService;
 import jakarta.validation.Valid;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -39,6 +40,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final LoginAttemptAuditService loginAttemptAuditService;
+    private final AccountLockoutService accountLockoutService;
     private final KafkaEventPublisher kafkaEventPublisher;
     private final AuditService auditService;
     private final Counter loginSuccessCounter;
@@ -47,6 +49,7 @@ public class AuthController {
     public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder,
                           JwtService jwtService, RefreshTokenService refreshTokenService,
                           LoginAttemptAuditService loginAttemptAuditService,
+                          AccountLockoutService accountLockoutService,
                           KafkaEventPublisher kafkaEventPublisher,
                           AuditService auditService,
                           MeterRegistry meterRegistry) {
@@ -55,6 +58,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.loginAttemptAuditService = loginAttemptAuditService;
+        this.accountLockoutService = accountLockoutService;
         this.kafkaEventPublisher = kafkaEventPublisher;
         this.auditService = auditService;
         this.loginSuccessCounter = Counter.builder("ecommerce.auth.login")
@@ -69,9 +73,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        var userOpt = appUserRepository.findByEmailIgnoreCase(request.email())
-                .filter(candidate -> candidate.isEnabled()
-                        && passwordEncoder.matches(request.password(), candidate.getPasswordHash()));
+        var userOpt = appUserRepository.findByEmailIgnoreCase(request.email());
 
         if (userOpt.isEmpty()) {
             loginFailureCounter.increment();
@@ -80,8 +82,22 @@ public class AuthController {
         }
 
         var user = userOpt.get();
+
+        if (accountLockoutService.isLocked(user)) {
+            loginAttemptAuditService.record(request.email(), false, "ACCOUNT_LOCKED");
+            throw new ResponseStatusException(HttpStatus.LOCKED, "Account temporarily locked. Try again later.");
+        }
+
+        if (!user.isEnabled() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            loginFailureCounter.increment();
+            loginAttemptAuditService.record(request.email(), false, "INVALID_CREDENTIALS");
+            accountLockoutService.recordFailure(user);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        }
+
         loginSuccessCounter.increment();
         loginAttemptAuditService.record(user.getEmail(), true, null);
+        accountLockoutService.recordSuccess(user);
 
         List<String> permissions = parsePermissions(user.getPermissions());
         String token = jwtService.createToken(user.getEmail(), user.getFullName(), user.getRole(), permissions);

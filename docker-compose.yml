@@ -166,7 +166,8 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ecommerce}?sslmode=verify-full&sslrootcert=/certs/ca.crt"
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-ecommerce_user}
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env before starting the backend}
+      JWT_PRIVATE_KEY_PATH: /app/secrets/jwt_private_key.pem
+      JWT_PUBLIC_KEY_PATH: /app/secrets/jwt_public_key.pem
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       SPRING_MAIL_HOST: mailhog
       SPRING_MAIL_PORT: 1025
@@ -183,6 +184,7 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - postgres_public_certs:/certs:ro
+      - ./secrets:/app/secrets:ro
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:
@@ -203,7 +205,7 @@ services:
       - backend-net
 
   kafka:
-    image: bitnami/kafka:3.7
+    image: bitnami/kafka:4.0
     container_name: ecommerce-kafka
     restart: unless-stopped
     environment:
@@ -229,7 +231,7 @@ services:
       - backend-net
 
   kafka-init:
-    image: bitnami/kafka:3.7
+    image: bitnami/kafka:4.0
     container_name: ecommerce-kafka-init
     restart: "no"
     depends_on:

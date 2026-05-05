@@ -3,43 +3,45 @@ package com.pehlione.ecommerce.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
 @Service
 public class JwtService {
-    private static final int MIN_SECRET_BYTES = 32;
 
-    private final SecretKey key;
+    private final RSAPrivateKey signingKey;
+    private final RSAPublicKey verificationKey;
     private final long expirationMinutes;
 
     public JwtService(
-            @Value("${security.jwt.secret}") String secret,
+            @Value("${security.jwt.private-key-path}") String privateKeyPath,
+            @Value("${security.jwt.public-key-path}") String publicKeyPath,
             @Value("${security.jwt.expiration-minutes}") long expirationMinutes
-    ) {
-        byte[] secretBytes = validateSecret(secret);
-        this.key = Keys.hmacShaKeyFor(secretBytes);
+    ) throws IOException, GeneralSecurityException {
+        this.signingKey = loadPrivateKey(privateKeyPath);
+        this.verificationKey = loadPublicKey(publicKeyPath);
         this.expirationMinutes = expirationMinutes;
     }
 
-    private byte[] validateSecret(String secret) {
-        if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException("JWT secret must be configured");
-        }
-
-        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
-        if (secretBytes.length < MIN_SECRET_BYTES) {
-            throw new IllegalStateException("JWT secret must be at least 32 bytes for HS256 signing");
-        }
-
-        return secretBytes;
+    // Package-private constructor for unit tests
+    JwtService(RSAPrivateKey signingKey, RSAPublicKey verificationKey, long expirationMinutes) {
+        this.signingKey = signingKey;
+        this.verificationKey = verificationKey;
+        this.expirationMinutes = expirationMinutes;
     }
 
     public String createToken(String subject, String fullName, String role, List<String> permissions) {
@@ -51,15 +53,37 @@ public class JwtService {
                 .claim("permissions", permissions)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expirationMinutes * 60)))
-                .signWith(key)
+                .signWith(signingKey, Jwts.SIG.RS256)
                 .compact();
     }
 
     public Claims parseToken(String token) throws JwtException {
         return Jwts.parser()
-                .verifyWith(key)
+                .verifyWith(verificationKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    private RSAPrivateKey loadPrivateKey(String path) throws IOException, GeneralSecurityException {
+        String pem = Files.readString(Paths.get(path));
+        byte[] der = decodePem(pem, "PRIVATE KEY");
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(der);
+        return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(spec);
+    }
+
+    private RSAPublicKey loadPublicKey(String path) throws IOException, GeneralSecurityException {
+        String pem = Files.readString(Paths.get(path));
+        byte[] der = decodePem(pem, "PUBLIC KEY");
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(der);
+        return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+    }
+
+    private byte[] decodePem(String pem, String type) {
+        String cleaned = pem
+                .replace("-----BEGIN " + type + "-----", "")
+                .replace("-----END " + type + "-----", "")
+                .replaceAll("\\s", "");
+        return Base64.getDecoder().decode(cleaned);
     }
 }

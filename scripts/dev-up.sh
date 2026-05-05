@@ -15,8 +15,6 @@ generate_secret() {
 # .env yoksa oluştur
 if [ ! -f .env ]; then
   cp .env.example .env
-  generated_secret="$(generate_secret)"
-  sed -i "s#^JWT_SECRET=.*#JWT_SECRET=${generated_secret}#" .env
   echo ".env oluşturuldu. Production için değerleri değiştirin."
 fi
 
@@ -26,6 +24,18 @@ if [ ! -f secrets/postgres_password.txt ]; then
   generate_secret | tr -d '\n' > secrets/postgres_password.txt
   chmod 644 secrets/postgres_password.txt
   echo "secrets/postgres_password.txt oluşturuldu."
+fi
+
+# JWT RSA keypair yoksa oluştur
+if [ ! -f secrets/jwt_private_key.pem ] || [ ! -f secrets/jwt_public_key.pem ]; then
+  echo "JWT RSA keypair oluşturuluyor..."
+  openssl genrsa -out /tmp/jwt_rsa_tmp.pem 2048 2>/dev/null
+  openssl pkcs8 -topk8 -nocrypt -in /tmp/jwt_rsa_tmp.pem -out secrets/jwt_private_key.pem
+  openssl rsa -in /tmp/jwt_rsa_tmp.pem -pubout -out secrets/jwt_public_key.pem 2>/dev/null
+  rm -f /tmp/jwt_rsa_tmp.pem
+  chmod 600 secrets/jwt_private_key.pem
+  chmod 644 secrets/jwt_public_key.pem
+  echo "JWT RSA keypair secrets/ klasörüne oluşturuldu."
 fi
 
 docker compose up --build -d

@@ -1,5 +1,6 @@
 package com.pehlione.ecommerce.controller;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
@@ -9,12 +10,17 @@ import com.pehlione.ecommerce.domain.AppUser;
 import com.pehlione.ecommerce.dto.LoginRequest;
 import com.pehlione.ecommerce.event.KafkaEventPublisher;
 import com.pehlione.ecommerce.repository.AppUserRepository;
+import com.pehlione.ecommerce.security.AccountLockoutService;
 import com.pehlione.ecommerce.security.JwtService;
 import com.pehlione.ecommerce.security.LoginAttemptAuditService;
 import com.pehlione.ecommerce.security.RefreshTokenService;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.lang.reflect.Proxy;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,8 +31,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AuthControllerTest {
-    private final JwtService jwtService = new JwtService("01234567890123456789012345678901", 30);
+
+    private static JwtService jwtService;
     private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+
+    @BeforeAll
+    static void generateKeyPair() throws Exception {
+        KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+        gen.initialize(2048);
+        KeyPair kp = gen.generateKeyPair();
+        jwtService = new JwtService((RSAPrivateKey) kp.getPrivate(), (RSAPublicKey) kp.getPublic(), 30);
+    }
 
     @Test
     void loginReturnsBearerTokenForValidCredentials() {
@@ -44,6 +59,7 @@ class AuthControllerTest {
                 jwtService,
                 refreshTokenService(),
                 loginAttemptAuditService(),
+                accountLockoutService(),
                 kafkaEventPublisher(),
                 auditService(),
                 meterRegistry
@@ -74,6 +90,7 @@ class AuthControllerTest {
                 jwtService,
                 refreshTokenService(),
                 loginAttemptAuditService(),
+                accountLockoutService(),
                 kafkaEventPublisher(),
                 auditService(),
                 meterRegistry
@@ -116,6 +133,12 @@ class AuthControllerTest {
         RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
         when(refreshTokenService.rotateForUser(any(AppUser.class))).thenReturn("refresh-token");
         return refreshTokenService;
+    }
+
+    private AccountLockoutService accountLockoutService() {
+        AccountLockoutService lockoutService = mock(AccountLockoutService.class);
+        when(lockoutService.isLocked(any(AppUser.class))).thenReturn(false);
+        return lockoutService;
     }
 
     private LoginAttemptAuditService loginAttemptAuditService() {
