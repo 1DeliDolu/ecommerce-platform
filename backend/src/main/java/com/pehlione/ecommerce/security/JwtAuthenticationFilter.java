@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,8 +43,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authoritiesFromClaims(claims)
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            MDC.put("userId", claims.getSubject());
         } catch (JwtException | IllegalArgumentException exception) {
             SecurityContextHolder.clearContext();
+            MDC.remove("userId");
         }
 
         filterChain.doFilter(request, response);

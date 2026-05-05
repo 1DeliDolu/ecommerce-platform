@@ -1,5 +1,7 @@
 package com.pehlione.ecommerce.security;
 
+import com.pehlione.ecommerce.audit.AuditAction;
+import com.pehlione.ecommerce.audit.AuditService;
 import com.pehlione.ecommerce.event.KafkaEventPublisher;
 import com.pehlione.ecommerce.event.KafkaTopics;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,10 +13,12 @@ import java.util.Map;
 public class LoginAttemptAuditService {
     private final JdbcTemplate jdbcTemplate;
     private final KafkaEventPublisher kafkaEventPublisher;
+    private final AuditService auditService;
 
-    public LoginAttemptAuditService(JdbcTemplate jdbcTemplate, KafkaEventPublisher kafkaEventPublisher) {
+    public LoginAttemptAuditService(JdbcTemplate jdbcTemplate, KafkaEventPublisher kafkaEventPublisher, AuditService auditService) {
         this.jdbcTemplate = jdbcTemplate;
         this.kafkaEventPublisher = kafkaEventPublisher;
+        this.auditService = auditService;
     }
 
     public void record(String email, boolean success, String failureCode) {
@@ -24,6 +28,14 @@ public class LoginAttemptAuditService {
                 normalizedEmail,
                 success,
                 failureCode
+        );
+        auditService.record(
+                success ? AuditAction.LOGIN_SUCCESS : AuditAction.LOGIN_FAILED,
+                "auth",
+                normalizedEmail,
+                "email=" + maskEmail(normalizedEmail)
+                        + "; success=" + success
+                        + "; failureCode=" + (failureCode == null ? "" : failureCode)
         );
 
         kafkaEventPublisher.publish(

@@ -1,5 +1,7 @@
 package com.pehlione.ecommerce.config;
 
+import com.pehlione.ecommerce.audit.AuditAction;
+import com.pehlione.ecommerce.audit.AuditService;
 import com.pehlione.ecommerce.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +27,11 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            AuditService auditService
+    ) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -35,8 +41,15 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) ->
                                 response.sendError(401, "Unauthorized"))
-                        .accessDeniedHandler((request, response, exception) ->
-                                response.sendError(403, "Forbidden"))
+                        .accessDeniedHandler((request, response, exception) -> {
+                            auditService.record(
+                                    AuditAction.PERMISSION_DENIED,
+                                    "http",
+                                    request.getRequestURI(),
+                                    "method=" + request.getMethod()
+                            );
+                            response.sendError(403, "Forbidden");
+                        })
                 )
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
@@ -45,8 +58,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/actuator/health", "/api/health").permitAll()
-                        .requestMatchers("/actuator/prometheus").hasRole("ADMIN")
+                        .requestMatchers("/actuator/health", "/actuator/prometheus", "/api/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
@@ -71,7 +83,8 @@ public class SecurityConfig {
                 .filter(origin -> !origin.isBlank())
                 .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-User-Email"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-User-Email", "X-Correlation-Id"));
+        config.setExposedHeaders(List.of("X-Correlation-Id"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

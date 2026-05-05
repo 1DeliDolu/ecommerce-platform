@@ -1,5 +1,7 @@
 package com.pehlione.ecommerce.service;
 
+import com.pehlione.ecommerce.audit.AuditAction;
+import com.pehlione.ecommerce.audit.AuditService;
 import com.pehlione.ecommerce.domain.Category;
 import com.pehlione.ecommerce.domain.Product;
 import com.pehlione.ecommerce.dto.PagedResponse;
@@ -27,17 +29,20 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuditService auditService;
     private final String adminMailTo;
 
     public ProductService(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             ApplicationEventPublisher eventPublisher,
+            AuditService auditService,
             @Value("${app.mail.admin-to:admin@example.com}") String adminMailTo
     ) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.eventPublisher = eventPublisher;
+        this.auditService = auditService;
         this.adminMailTo = adminMailTo;
     }
 
@@ -96,6 +101,12 @@ public class ProductService {
         );
 
         Product saved = productRepository.save(product);
+        auditService.record(
+                AuditAction.PRODUCT_CREATED,
+                "product",
+                saved.getId().toString(),
+                "name=" + saved.getName() + "; slug=" + saved.getSlug()
+        );
         category.setProductCount(category.getProductCount() + 1);
         categoryRepository.save(category);
 

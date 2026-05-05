@@ -1,5 +1,7 @@
 package com.pehlione.ecommerce.service;
 
+import com.pehlione.ecommerce.audit.AuditAction;
+import com.pehlione.ecommerce.audit.AuditService;
 import com.pehlione.ecommerce.domain.*;
 import com.pehlione.ecommerce.dto.customer.*;
 import com.pehlione.ecommerce.event.KafkaEventPublisher;
@@ -30,6 +32,7 @@ public class CheckoutService {
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationTemplateService notificationTemplateService;
     private final KafkaEventPublisher kafkaEventPublisher;
+    private final AuditService auditService;
     private final Counter orderCreatedCounter;
     private final Counter paymentFailureCounter;
 
@@ -39,6 +42,7 @@ public class CheckoutService {
                            ApplicationEventPublisher eventPublisher,
                            NotificationTemplateService notificationTemplateService,
                            KafkaEventPublisher kafkaEventPublisher,
+                           AuditService auditService,
                            MeterRegistry meterRegistry) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
@@ -46,6 +50,7 @@ public class CheckoutService {
         this.eventPublisher = eventPublisher;
         this.notificationTemplateService = notificationTemplateService;
         this.kafkaEventPublisher = kafkaEventPublisher;
+        this.auditService = auditService;
         this.orderCreatedCounter = Counter.builder("ecommerce.orders.created")
                 .description("Total orders placed")
                 .register(meterRegistry);
@@ -86,7 +91,7 @@ public class CheckoutService {
         order.setTax(tax);
         order.setTotalAmount(totalAmount);
         order.setPaymentMethod("CARD");
-        order.setPaymentReference(simulatePayment(request.getPayment()));
+        order.setPaymentReference(processPayment(userEmail, request.getPayment(), totalAmount));
 
         ShippingAddressRequest shipping = request.getShippingAddress();
         order.setShippingFullName(shipping.getFullName());
@@ -105,6 +110,12 @@ public class CheckoutService {
         }
 
         CustomerOrder savedOrder = orderRepository.save(order);
+        auditService.record(
+                AuditAction.ORDER_CREATED,
+                "order",
+                savedOrder.getId().toString(),
+                "orderNumber=" + savedOrder.getOrderNumber() + "; totalAmount=" + savedOrder.getTotalAmount()
+        );
         cartItemRepository.deleteByUserEmail(userEmail);
         orderCreatedCounter.increment();
 
@@ -164,10 +175,35 @@ public class CheckoutService {
             throw new IllegalArgumentException("All payment fields are required.");
     }
 
-    private String simulatePayment(PaymentRequest payment) {
-        String last4 = payment.getCardNumber().replaceAll("\\s+", "");
-        last4 = last4.length() >= 4 ? last4.substring(last4.length() - 4) : "0000";
+    private String processPayment(String userEmail, PaymentRequest payment, BigDecimal totalAmount) {
+        String normalizedCardNumber = payment.getCardNumber().replaceAll("\\s+", "");
+        String last4 = last4(normalizedCardNumber);
+        if ("0000".equals(last4)) {
+            paymentFailureCounter.increment();
+            auditService.record(
+                    AuditAction.PAYMENT_FAILED,
+                    "payment",
+                    null,
+                    "user=" + maskEmail(userEmail) + "; amount=" + totalAmount + "; cardLast4=" + last4
+            );
+            kafkaEventPublisher.publish(
+                    KafkaTopics.PAYMENT_FAILED,
+                    "payment-service",
+                    Map.of(
+                            "amount", totalAmount,
+                            "method", "CARD",
+                            "cardLast4", last4,
+                            "reason", "SIMULATED_DECLINE"
+                    )
+            );
+            throw new IllegalArgumentException("Payment was declined.");
+        }
+
         return "PAY-SIM-" + last4 + "-" + System.currentTimeMillis();
+    }
+
+    private String last4(String cardNumber) {
+        return cardNumber.length() >= 4 ? cardNumber.substring(cardNumber.length() - 4) : "0000";
     }
 
     private String generateOrderNumber() {
@@ -176,4 +212,15 @@ public class CheckoutService {
     }
 
     private boolean isBlank(String v) { return v == null || v.trim().isEmpty(); }
+
+    private String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "unknown";
+        }
+        int at = email.indexOf('@');
+        if (at <= 1) {
+            return "***" + email.substring(Math.max(at, 0));
+        }
+        return email.charAt(0) + "***" + email.substring(at);
+    }
 }

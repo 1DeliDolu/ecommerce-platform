@@ -1,5 +1,7 @@
 package com.pehlione.ecommerce.controller;
 
+import com.pehlione.ecommerce.audit.AuditAction;
+import com.pehlione.ecommerce.audit.AuditService;
 import jakarta.validation.Valid;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -38,6 +40,7 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final LoginAttemptAuditService loginAttemptAuditService;
     private final KafkaEventPublisher kafkaEventPublisher;
+    private final AuditService auditService;
     private final Counter loginSuccessCounter;
     private final Counter loginFailureCounter;
 
@@ -45,6 +48,7 @@ public class AuthController {
                           JwtService jwtService, RefreshTokenService refreshTokenService,
                           LoginAttemptAuditService loginAttemptAuditService,
                           KafkaEventPublisher kafkaEventPublisher,
+                          AuditService auditService,
                           MeterRegistry meterRegistry) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
@@ -52,6 +56,7 @@ public class AuthController {
         this.refreshTokenService = refreshTokenService;
         this.loginAttemptAuditService = loginAttemptAuditService;
         this.kafkaEventPublisher = kafkaEventPublisher;
+        this.auditService = auditService;
         this.loginSuccessCounter = Counter.builder("ecommerce.auth.login")
                 .tag("result", "success")
                 .description("Successful logins")
@@ -102,6 +107,12 @@ public class AuthController {
         user.setEnabled(true);
 
         AppUser saved = appUserRepository.save(user);
+        auditService.record(
+                AuditAction.USER_REGISTERED,
+                "user",
+                saved.getId().toString(),
+                "email=" + maskEmail(saved.getEmail()) + "; role=" + saved.getRole()
+        );
         List<String> permissions = parsePermissions(saved.getPermissions());
         String token = jwtService.createToken(saved.getEmail(), saved.getFullName(), saved.getRole(), permissions);
         String refreshToken = refreshTokenService.rotateForUser(saved);
@@ -130,6 +141,12 @@ public class AuthController {
         List<String> permissions = parsePermissions(user.getPermissions());
         String accessToken = jwtService.createToken(user.getEmail(), user.getFullName(), user.getRole(), permissions);
         String refreshToken = refreshTokenService.rotateForUser(user);
+        auditService.record(
+                AuditAction.TOKEN_REFRESHED,
+                "auth",
+                user.getId().toString(),
+                "email=" + maskEmail(user.getEmail())
+        );
 
         return new LoginResponse(accessToken, refreshToken, toUserResponse(user, permissions));
     }
@@ -194,5 +211,16 @@ public class AuthController {
                 .map(Object::toString)
                 .filter(permission -> !permission.isBlank())
                 .toList();
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "";
+        }
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 1) {
+            return "***" + (atIndex >= 0 ? email.substring(atIndex) : "");
+        }
+        return email.charAt(0) + "***" + email.substring(atIndex);
     }
 }

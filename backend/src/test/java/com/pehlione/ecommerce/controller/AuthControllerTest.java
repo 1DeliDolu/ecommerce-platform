@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.pehlione.ecommerce.audit.AuditService;
 import com.pehlione.ecommerce.domain.AppUser;
 import com.pehlione.ecommerce.dto.LoginRequest;
 import com.pehlione.ecommerce.event.KafkaEventPublisher;
@@ -44,6 +45,7 @@ class AuthControllerTest {
                 refreshTokenService(),
                 loginAttemptAuditService(),
                 kafkaEventPublisher(),
+                auditService(),
                 meterRegistry
         );
 
@@ -73,6 +75,7 @@ class AuthControllerTest {
                 refreshTokenService(),
                 loginAttemptAuditService(),
                 kafkaEventPublisher(),
+                auditService(),
                 meterRegistry
         );
 
@@ -121,5 +124,9 @@ class AuthControllerTest {
 
     private KafkaEventPublisher kafkaEventPublisher() {
         return mock(KafkaEventPublisher.class);
+    }
+
+    private AuditService auditService() {
+        return mock(AuditService.class);
     }
 }
