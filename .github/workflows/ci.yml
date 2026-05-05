@@ -89,7 +89,7 @@ jobs:
           printf '%s' 'ci-private-key-placeholder' > secrets/jwt_private_key.pem
           printf '%s' 'ci-public-key-placeholder' > secrets/jwt_public_key.pem
       - name: Build Image
-        run: docker compose build ${{ matrix.service }}
+        run: docker compose build --pull --no-cache ${{ matrix.service }}
       - name: Scan Image
         uses: aquasecurity/trivy-action@v0.35.0
         with:
