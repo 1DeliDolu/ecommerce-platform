@@ -38,6 +38,17 @@ spring:
           auth: false
           starttls:
             enable: false
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:ecommerce}
+    password: ${SPRING_RABBITMQ_PASSWORD:ecommerce}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
   servlet:
     multipart:
       enabled: true

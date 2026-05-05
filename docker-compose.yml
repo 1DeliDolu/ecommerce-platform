@@ -142,6 +142,8 @@ services:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ecommerce}?sslmode=verify-full&sslrootcert=/certs/ca.crt"
@@ -151,6 +153,10 @@ services:
       SPRING_MAIL_HOST: mailhog
       SPRING_MAIL_PORT: 1025
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-ecommerce}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-ecommerce}
       APP_MAIL_FROM: ${APP_MAIL_FROM:-no-reply@enterprise-shop.local}
       APP_MAIL_ADMIN_TO: ${APP_MAIL_ADMIN_TO:-admin@example.com}
     secrets:
@@ -229,6 +235,24 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
     ports:
       - "${KAFKA_UI_PORT:-8085}:8080"
+    networks:
+      - backend-net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: ecommerce-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ecommerce}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-ecommerce}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      <<: *healthcheck-defaults
     networks:
       - backend-net
 
@@ -315,6 +339,7 @@ volumes:
   prometheus_data:
   grafana_data:
   kafka_data:
+  rabbitmq_data:
 
 networks:
   backend-net:
