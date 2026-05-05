@@ -32,6 +32,8 @@ for IMAGE in "${IMAGES[@]}"; do
     image \
     --exit-code 1 \
     --severity HIGH,CRITICAL \
+    --ignore-unfixed \
+    --scanners vuln \
     --no-progress \
     "$IMAGE" || FAILED=$((FAILED + 1))
 

@@ -19,6 +19,7 @@ docker run --rm \
   zricethezav/gitleaks:latest \
   detect \
   --source /repo \
+  --config /repo/.gitleaks.toml \
   --no-git \
   --exit-code 1 \
   --redact \
